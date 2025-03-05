@@ -1,0 +1,102 @@
+<odoo>
+    <!-- Root Menu for WhatsApp Integration -->
+    <menuitem id="menu_whatsapp_root" name="WhatsApp Integration" sequence="10"/>
+    
+    <!-- WhatsApp Session Action -->
+    <record id="action_whatsapp_session" model="ir.actions.act_window">
+        <field name="name">WhatsApp Sessions</field>
+        <field name="res_model">whatsapp.session</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first WhatsApp session.
+            </p>
+        </field>
+    </record>
+    
+    <!-- WhatsApp Sessions Submenu -->
+    <menuitem id="menu_whatsapp_session"
+              name="WhatsApp Sessions"
+              parent="menu_whatsapp_root"
+              action="action_whatsapp_session"
+              sequence="20"/>
+    
+    <!-- WhatsApp Session Tree View -->
+    <record id="view_whatsapp_session_tree" model="ir.ui.view">
+        <field name="name">whatsapp.session.tree</field>
+        <field name="model">whatsapp.session</field>
+        <field name="arch" type="xml">
+            <tree string="WhatsApp Sessions">
+                <field name="name"/>
+                <field name="user_id"/>
+                <field name="state"/>
+                <field name="last_connected"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- WhatsApp Session Form View -->
+    <record id="view_whatsapp_session_form" model="ir.ui.view">
+        <field name="name">whatsapp.session.form</field>
+        <field name="model">whatsapp.session</field>
+        <field name="arch" type="xml">
+            <form string="WhatsApp Integration">
+                <sheet>
+                    <div class="o_whatsapp_container" style="display: flex; flex-direction: row; width: 100%;">
+                        
+                        <!-- Left Side - QR Code Section -->
+                        <div class="o_whatsapp_qr_section" style="width: 30%; padding: 15px; background: #f7f7f7; border-right: 1px solid #ddd; display: flex; flex-direction: column;">
+                            <field name="name" required="1" string="Session Name"/>
+                            
+                            <!-- Control Buttons -->
+                            <button name="generate_qr_code" type="object" string="Generate QR Code" class="oe_highlight"
+                                style="margin-bottom: 10px; background-color: #673AB7; color: white; border: none; padding: 10px; border-radius: 4px;"/>
+
+                            <!-- WhatsApp Web Style QR Section -->
+                            <div class="o_whatsapp_qr_container" style="margin-top: 10px; background-color: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; display: flex; flex-direction: column; align-items: center;">
+                                <h3 style="font-size: 20px; margin-bottom: 10px; color: #333; text-align: center;">Log into WhatsApp Web</h3>
+                                <p style="font-size: 14px; color: #555; margin-bottom: 20px; text-align: center;">Message privately with friends and family using WhatsApp on your browser.</p>
+                                
+                                <div style="text-align: left; width: 100%; margin-bottom: 20px;">
+                                    <p style="margin-bottom: 8px;"><span style="font-weight: bold;">1.</span> Open WhatsApp on your phone</p>
+                                    <p style="margin-bottom: 8px;"><span style="font-weight: bold;">2.</span> Tap Menu on Android, or Settings on iPhone</p>
+                                    <p style="margin-bottom: 8px;"><span style="font-weight: bold;">3.</span> Tap Linked devices and then Link a device</p>
+                                    <p style="margin-bottom: 20px;"><span style="font-weight: bold;">4.</span> Point your phone at this screen to scan the QR code</p>
+                                </div>
+                                
+                                <div style="border: 1px solid #ddd; padding: 10px; margin-bottom: 15px;">
+                                    <field name="qr_code_image" widget="image" class="oe_qr_big" style="max-width: 200px;"/>
+                                </div>
+
+                                <!-- Fetch Chats Button -->
+                                <button name="get_chat_list" type="object" string="Fetch Chats" class="oe_highlight"
+                                    style="background-color: #673AB7; color: white; border: none; padding: 10px; border-radius: 4px; margin-top: 10px;"/>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Side - Chat List and Chat Window -->
+                        <div class="o_whatsapp_chat_section" style="width: 70%; display: flex; flex-direction: column;">
+                            <!-- Chat List at Top -->
+                            <div class="o_whatsapp_chat_list" style="padding: 15px; border-bottom: 1px solid #ddd;">
+                                <strong>Chats</strong>
+                                <field name="chat_ids">
+                                    <tree editable="false">
+                                        <field name="name" string="Chat Name"/>
+                                        <field name="unread_count" string="Unread Messages"/>
+                                    </tree>
+                                </field>
+                            </div>
+                            
+                            <!-- Chat Window Below -->
+                            <div class="o_whatsapp_chat_window" style="padding: 15px; flex-grow: 1; min-height: 300px; overflow-y: auto;">
+                                <div class="o_chat_placeholder" style="text-align: center; padding: 20px; color: #999;">
+                                    <p>Select a chat to start messaging</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>
