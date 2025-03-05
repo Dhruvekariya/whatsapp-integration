@@ -1,0 +1,24 @@
+# Ignore everything in the root directory
+/*
+
+# But do not ignore the addons folder itself
+!addons/
+!nodejs/
+
+# Ignore everything inside addons by default
+addons/*
+nodejs/*
+
+
+# But do not ignore whatsapp_integration inside addons
+!addons/whatsapp_integration/
+!nodejs/server.js
+!nodejs/package.json
+
+# Ensure all contents inside whatsapp_integration are included
+!addons/whatsapp_integration/**
+!nodejs/server.js
+!nodejs/package.json
+
+
+!.gitignore
