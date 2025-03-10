@@ -1,0 +1,194 @@
+// WhatsApp Test Mode Colors
+$whatsapp-green: #25D366;
+$whatsapp-light-green: #DCF8C6;
+$whatsapp-blue: #34B7F1;
+$whatsapp-light-gray: #F0F0F0;
+$whatsapp-bg-color: #E5DDD5;
+$test-mode-color: #9C27B0; // Purple to indicate test mode
+
+// QR Code Container
+.o_whatsapp_qr_container {
+    max-width: 400px;
+    margin: 0 auto;
+    text-align: center;
+
+    .oe_qr_big {
+        border: 3px solid $test-mode-color;
+        padding: 10px;
+        background-color: white;
+        margin: 20px auto;
+        display: inline-block;
+
+        img {
+            max-width: 300px;
+            max-height: 300px;
+        }
+    }
+}
+
+// WhatsApp Dashboard
+.o_whatsapp_dashboard {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    .o_whatsapp_dashboard_content {
+        flex: 1;
+        overflow-y: auto;
+        background-color: $whatsapp-light-gray;
+    }
+
+    .o_whatsapp_chat_list {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .o_whatsapp_chat_item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        margin-bottom: 8px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        transition: background-color 0.2s;
+
+        &:hover {
+            background-color: darken(white, 5%);
+        }
+
+        .o_whatsapp_chat_name {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .o_whatsapp_chat_unread {
+            background-color: $whatsapp-green;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+    }
+}
+
+// WhatsApp Conversation
+.o_whatsapp_conversation {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    .o_whatsapp_chat_header {
+        background-color: $test-mode-color !important;
+    }
+
+    .o_whatsapp_messages_container {
+        flex: 1;
+        overflow-y: auto;
+        background-color: $whatsapp-bg-color;
+        padding: 12px;
+
+        .o_whatsapp_messages {
+            display: flex;
+            flex-direction: column;
+        }
+    }
+
+    .o_whatsapp_message {
+        max-width: 75%;
+        margin-bottom: 8px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        position: relative;
+        word-wrap: break-word;
+
+        &.o_whatsapp_incoming {
+            align-self: flex-start;
+            background-color: white;
+            border-top-left-radius: 0;
+        }
+
+        &.o_whatsapp_outgoing {
+            align-self: flex-end;
+            background-color: $whatsapp-light-green;
+            border-top-right-radius: 0;
+        }
+
+        .o_whatsapp_message_meta {
+            font-size: 11px;
+            text-align: right;
+            color: rgba(0, 0, 0, 0.5);
+            margin-top: 4px;
+        }
+    }
+
+    .o_whatsapp_message_input {
+        padding: 12px;
+        background-color: white;
+
+        input {
+            border-radius: 20px;
+            padding: 8px 12px;
+        }
+
+        button {
+            background-color: $test-mode-color;
+            border-color: darken($test-mode-color, 10%);
+
+            &:hover {
+                background-color: darken($test-mode-color, 10%);
+            }
+        }
+    }
+}
+
+// Kanban card
+.o_whatsapp_chat_card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    .o_whatsapp_chat_header {
+        padding: 12px;
+
+        .o_whatsapp_unread {
+            float: right;
+        }
+    }
+
+    .o_whatsapp_chat_preview {
+        flex: 1;
+        padding: 8px 12px;
+        border-top: 1px solid $whatsapp-light-gray;
+        border-bottom: 1px solid $whatsapp-light-gray;
+
+        p {
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    .o_whatsapp_chat_footer {
+        padding: 8px 12px;
+        text-align: right;
+    }
+}
+
+// WhatsApp test session status bar
+.o_statusbar_status .o_arrow_button {
+    &.btn-primary {
+        background-color: $test-mode-color;
+    }
+}
+
+// Test mode buttons
+button[name="simulate_connection"] {
+    background-color: $test-mode-color !important;
+    border-color: darken($test-mode-color, 10%) !important;
+
+    &:hover {
+        background-color: darken($test-mode-color, 10%) !important;
+    }
+}

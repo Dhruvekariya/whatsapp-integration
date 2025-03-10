@@ -12,13 +12,18 @@ nodejs/*
 
 # But do not ignore whatsapp_integration inside addons
 !addons/whatsapp_integration/
+!addons/whatsapp_integration_test/
 !nodejs/server.js
 !nodejs/package.json
+!nodejs/index.js
 
-# Ensure all contents inside whatsapp_integration are included
+# Ensure all contents inside whatsapp_integration and whatsapp_integration_test are included
 !addons/whatsapp_integration/**
+!addons/whatsapp_integration_test/**
+!addons/whatsapp_integration_test/specific_file.txt
 !nodejs/server.js
 !nodejs/package.json
+!nodejs/index.js
 
 
 !.gitignore

@@ -1,0 +1,107 @@
+/* WhatsApp Test Mode Styling */
+$whatsapp-green: #25D366;
+$whatsapp-light-green: #DCF8C6;
+$whatsapp-blue: #34B7F1;
+$test-mode-color: #9C27B0; // Purple to indicate test mode
+
+/* Test mode indicator */
+.test_mode {
+    position: relative;
+
+    &:after {
+        content: "TEST MODE";
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: $test-mode-color;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: bold;
+        opacity: 0.8;
+    }
+}
+
+/* QR code screen for test mode */
+.o_whatsapp_qr_screen {
+    border: 2px solid $test-mode-color;
+    border-radius: 8px;
+
+    .o_whatsapp_qr_container {
+        h3 {
+            color: $test-mode-color;
+
+            &:after {
+                content: "(TEST)";
+                margin-left: 10px;
+                font-size: 14px;
+                background-color: $test-mode-color;
+                color: white;
+                padding: 2px 8px;
+                border-radius: 10px;
+            }
+        }
+    }
+
+    .o_whatsapp_simulate_connection {
+        background-color: $test-mode-color;
+        border-color: darken($test-mode-color, 10%);
+
+        &:hover {
+            background-color: darken($test-mode-color, 10%);
+        }
+    }
+}
+
+/* WhatsApp chat UI for test mode */
+.o_whatsapp_chat_container.test_mode {
+    border: 2px solid $test-mode-color;
+    border-radius: 8px;
+    overflow: hidden;
+
+    .o_whatsapp_chat_header {
+        background-color: lighten($test-mode-color, 40%);
+        border-bottom: 2px solid $test-mode-color;
+    }
+
+    .o_whatsapp_chat_send {
+        background-color: $test-mode-color;
+
+        &:hover {
+            background-color: darken($test-mode-color, 10%);
+        }
+    }
+}
+
+/* Enhanced QR code display */
+.oe_qr_big img {
+    border: 3px solid $test-mode-color !important;
+}
+
+/* Session form view customizations for test mode */
+.o_form_view.o_whatsapp_test {
+    .o_form_sheet_bg {
+        background-color: lighten($test-mode-color, 45%);
+    }
+
+    .o_form_statusbar .o_statusbar_status .o_arrow_button.btn-primary {
+        background-color: $test-mode-color;
+    }
+
+    button.oe_highlight {
+        background-color: $test-mode-color;
+        border-color: darken($test-mode-color, 10%);
+
+        &:hover {
+            background-color: darken($test-mode-color, 10%);
+        }
+    }
+}
+
+/* Test Mode Chat List */
+.o_list_view.o_whatsapp_test_list {
+    .o_data_row.o_is_favorite {
+        background-color: lighten($test-mode-color, 42%);
+    }
+}
