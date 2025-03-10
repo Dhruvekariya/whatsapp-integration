@@ -170,6 +170,11 @@
         </field>
     </record>
     
+    <!-- Test menu structure -->
+    <menuitem id="menu_whatsapp_root_test" 
+              name="WhatsApp Testing"
+              sequence="11"/>
+              
     <!-- Define a menu for WhatsApp chats -->
     <menuitem id="menu_whatsapp_chat" 
               name="WhatsApp Chats"
@@ -177,10 +182,6 @@
               action="action_whatsapp_chat"
               sequence="30"/>
     
-    <!-- Test menu structure -->
-    <menuitem id="menu_whatsapp_root_test" 
-              name="WhatsApp Testing"
-              sequence="11"/>
               
     <menuitem id="menu_whatsapp_session_test"
               name="WhatsApp Test Sessions"

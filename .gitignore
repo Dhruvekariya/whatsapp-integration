@@ -1,29 +1,27 @@
-# Ignore everything in the root directory
+# Ignore everything by default
 /*
 
-# But do not ignore the addons folder itself
+# Allow important directories
 !addons/
 !nodejs/
 
-# Ignore everything inside addons by default
+# Ignore everything inside these folders by default
 addons/*
 nodejs/*
 
-
-# But do not ignore whatsapp_integration inside addons
+# Allow specific modules inside addons
 !addons/whatsapp_integration/
 !addons/whatsapp_integration_test/
+# Allow specific files inside nodejs
 !nodejs/server.js
 !nodejs/package.json
 !nodejs/index.js
 
-# Ensure all contents inside whatsapp_integration and whatsapp_integration_test are included
-!addons/whatsapp_integration/**
-!addons/whatsapp_integration_test/**
-!addons/whatsapp_integration_test/specific_file.txt
-!nodejs/server.js
-!nodejs/package.json
-!nodejs/index.js
+# Ignore cache, compiled Python, and system files
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
 
-
+# Allow this .gitignore itself
 !.gitignore
