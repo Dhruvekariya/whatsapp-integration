@@ -11,9 +11,11 @@ class WhatsAppChat(models.Model):
     _name = "whatsapp.chat"
     _description = "WhatsApp Chat"
 
+    message_ids = fields.One2many("whatsapp.message", "chat_id", string="Messages")
     name = fields.Char(string="Chat Name", required=True)
     unread_count = fields.Integer(string="Unread Messages")
     session_id = fields.Many2one("whatsapp.session", string="WhatsApp Session")
+
 
 
 

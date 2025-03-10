@@ -2,31 +2,32 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const express = require('express');
 const qrcode = require('qrcode-terminal');
 const qrcodeData = require('qrcode');
+const cors = require('cors');
+const http = require("http");
+const socketSetup = require("./index");  // Import socket module
 
 const app = express();
+const server = http.createServer(app);
+const io = socketSetup(server);  // Initialize socket.io server
+
 const port = 3000;
 
-// Add JSON parsing middleware
+app.use(cors());
 app.use(express.json());
 
 let qrCodeData = "";
 
-// Configure the client with Puppeteer options and LocalAuth
+// Configure WhatsApp Client
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
-        headless: true,  // Set to false to open the browser window for debugging
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-gpu',
-            '--incognito',
-            '--disable-cache',
-            '--disable-application-cache'
-        ],
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
         executablePath: require('puppeteer').executablePath()
     }
 });
+
+
 
 // Helper functions for standardized responses
 function successResponse(res, data, message = 'Success') {
@@ -45,22 +46,28 @@ function errorResponse(res, error, statusCode = 500) {
     });
 }
 
-// Event when WhatsApp generates a QR Code
+
+// Emit QR Code via WebSocket
 client.on('qr', async (qr) => {
     const qrCodeUrl1 = await qrcodeData.toDataURL(qr);
-    qrcode.generate(qr, { small: true });  // Display QR Code in the terminal
+    qrcode.generate(qr, { small: true });
     console.log("QR Code generated");
-    qrCodeData = qrCodeUrl1;  // Store QR Code as a Base64 string
+    qrCodeData = qrCodeUrl1;
+
+    io.emit("qrCode", qrCodeUrl1);  // Emit QR Code to frontend
 });
 
-// Event when WhatsApp Web is ready
+// Emit when WhatsApp is ready
 client.on('ready', () => {
     console.log('WhatsApp Client is Ready!');
     console.log('Client info:', client.info);
+
+    io.emit("whatsappReady", true);  // Emit to clients
     
     // Try to get chats right after client is ready
     client.getChats().then(chats => {
         console.log(`Found ${chats.length} chats`);
+        io.emit("chats", chats);
         if (chats.length > 0) {
             console.log('First chat example:', {
                 id: chats[0].id._serialized,
@@ -73,26 +80,63 @@ client.on('ready', () => {
     });
 });
 
-// Track new messages
+
+// Emit new messages to clients
 client.on('message', async (message) => {
     console.log('New message received:', message.body);
-    // Here you could implement a webhook to notify Odoo about new messages
+    
+    // Emit received messages
+    io.emit("newMessage", {
+        id: message.id._serialized,
+        from: message.from,
+        body: message.body,
+        timestamp: message.timestamp
+    });
 });
 
-// Track message status updates
+// Track message acknowledgments
 client.on('message_ack', (message, ack) => {
-    // ack values: 0 = pending, 1 = received, 2 = sent, 3 = delivered, 4 = read
     console.log(`Message ${message.id._serialized} status updated to: ${ack}`);
-    // Here you could implement a webhook to update message status in Odoo
+    io.emit("messageAck", { id: message.id._serialized, ack });
 });
 
-// Initialize WhatsApp Client
+// Start WhatsApp Client
 client.initialize();
 
 // === API Endpoints ===
 
+app.get("/", (_req, res) => {
+    return res.json({ success: true, message: "Server is running", clientInitialized: !!client });
+});
+
+// Send message via WebSocket
+io.on("connection", (socket) => {
+    console.log("Client connected:", socket.id);
+
+    socket.on("sendMessage", async ({ chatId, message }) => {
+        try {
+            const sentMessage = await client.sendMessage(chatId, message);
+            io.emit("messageSent", {
+                messageId: sentMessage.id._serialized,
+                timestamp: sentMessage.timestamp,
+            });
+        } catch (error) {
+            console.error("Error sending message:", error);
+            socket.emit("error", { message: "Failed to send message" });
+        }
+    });
+
+    socket.on("disconnect", () => {
+        console.log("Client disconnected:", socket.id);
+    });
+});
+
+
+
+// === API Endpoints ===
+
 // Test endpoint
-app.get("/test", (_req, res) => {
+app.get("/", (_req, res) => {
     return successResponse(res, {
         serverTime: new Date().toISOString(),
         clientInitialized: !!client,
@@ -100,6 +144,7 @@ app.get("/test", (_req, res) => {
         version: "1.0.0"
     }, "Server is running");
 });
+
 
 // Get QR Code endpoint
 app.get('/get_qr_code', (_req, res) => {
@@ -276,7 +321,9 @@ app.post('/logout', async (_req, res) => {
     }
 });
 
-// Start the Express server
-app.listen(port, () => {
-    console.log(`WhatsApp Web Service running on http://localhost:${port}`);
+
+
+// Start server
+server.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
 });
