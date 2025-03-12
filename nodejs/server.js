@@ -196,7 +196,6 @@ app.get("/get-chats", async (_req, res) => {
         
         // Simplify the response to reduce processing time
         const formattedChats = chats.map(chat => ({
-            ...chat,
             id: chat.id._serialized,
             name: chat.name || chat.id._serialized,
             isGroup: chat.isGroup || false,
