@@ -1,0 +1,43 @@
+.o_whatsapp_chat {
+    height: 100%;
+    
+    .o_chat_sidebar {
+        .chat-item {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            
+            &:hover {
+                background-color: #f8f9fa;
+            }
+            
+            &.bg-light {
+                background-color: #e9ecef !important;
+            }
+        }
+    }
+    
+    .o_chat_content {
+        .messages-container {
+            .message-wrapper {
+                .message-bubble {
+                    max-width: 80%;
+                    border-radius: 12px;
+                    
+                    &.bg-primary {
+                        border-top-right-radius: 2px;
+                    }
+                    
+                    &.bg-light {
+                        border-top-left-radius: 2px;
+                    }
+                }
+            }
+        }
+        
+        .message-input {
+            textarea {
+                resize: none;
+            }
+        }
+    }
+}
