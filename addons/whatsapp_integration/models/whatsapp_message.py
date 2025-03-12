@@ -13,7 +13,7 @@ class WhatsAppMessage(models.Model):
     name = fields.Char(string='Name', compute='_compute_name')
     session_id = fields.Many2one('whatsapp.session', string='Session', required=True)
     message_id = fields.Char(string='Message ID')
-    chat_id = fields.Char(string='Chat ID')
+    chat_id = fields.Many2one("whatsapp.chat", string="Chat", ondelete="cascade")
     content = fields.Text(string='Content')
     date = fields.Datetime(string='Date', default=fields.Datetime.now)
     direction = fields.Selection([
