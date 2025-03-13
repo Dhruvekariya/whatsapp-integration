@@ -10,8 +10,9 @@ addons/*
 nodejs/*
 
 # Allow specific modules inside addons
-!addons/whatsapp_integration/
 !addons/whatsapp_integration_test/
+!addons/whatsapp_integration_test/
+!addons/live_chat/
 # Allow specific files inside nodejs
 !nodejs/server.js
 !nodejs/package.json

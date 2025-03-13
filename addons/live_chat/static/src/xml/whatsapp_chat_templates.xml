@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="live_chat.WhatsAppChat" owl="1">
+        <div class="o_whatsapp_chat d-flex h-100">
+            <!-- Chat list sidebar -->
+            <div class="o_chat_sidebar border-end" style="width: 300px;">
+                <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                    <h5 class="m-0">WhatsApp Chats</h5>
+                    <button class="btn btn-sm btn-secondary" t-on-click="refreshChats">
+                        <i class="fa fa-refresh"/> Refresh
+                    </button>
+                </div>
+                
+                <div t-if="state.loading" class="d-flex justify-content-center p-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                
+                <div t-if="!state.loading and state.chats.length === 0" class="p-3 text-center text-muted">
+                    No chats available
+                </div>
+                
+                <div t-if="!state.loading" class="chat-list overflow-auto" style="max-height: calc(100vh - 50px);">
+                    <t t-foreach="state.chats" t-as="chat" t-key="chat.id">
+                        <div 
+                            class="chat-item p-2 border-bottom d-flex align-items-center"
+                            t-att-class="{'bg-light': chat.isActive}"
+                            t-on-click="() => this.selectChat(chat)"
+                        >
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <strong><t t-esc="chat.name"/></strong>
+                                    <span t-if="chat.unread" class="badge bg-white rounded-pill">
+                                        <t t-esc="chat.unread"  />
+                                    </span>
+                                </div>
+                                <div class="text-muted text-truncate">
+                                    <t t-esc="chat.last_message"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </div>
+            
+            <!-- Chat content area -->
+            <div class="o_chat_content flex-grow-1 d-flex flex-column">
+                <t t-if="!state.activeChat">
+                    <div class="h-100 d-flex flex-column justify-content-center align-items-center text-muted">
+                        <div class="mb-3">
+                            <i class="fa fa-comments fa-4x"/>
+                        </div>
+                        <p>Select a chat to start messaging</p>
+                    </div>
+                </t>
+                
+                <t t-if="state.activeChat">
+                    <!-- Chat header -->
+                    <div class="chat-header p-2 border-bottom">
+                        <h5 class="m-0"><t t-esc="state.activeChat.name"/></h5>
+                    </div>
+                    
+                    <!-- Messages area -->
+                    <div class="messages-container flex-grow-1 p-2 overflow-auto" t-ref="messageList">
+                        <t t-if="state.messages[state.activeChat.id]">
+                            <t t-foreach="state.messages[state.activeChat.id]" t-as="message" t-key="message.id">
+                                <div class="message-wrapper d-flex mb-2"
+                                     t-att-class="message.sender === 'me' ? 'justify-content-end' : 'justify-content-start'">
+                                    <div class="message-bubble p-2 rounded"
+                                         t-att-class="message.sender === 'me' ? 'bg-primary text-white' : 'bg-light'">
+                                        <div><t t-esc="message.text"/></div>
+                                        <div class="message-time small" 
+                                             t-att-class="message.sender === 'me' ? 'text-white-50' : 'text-muted'">
+                                            <small><t t-esc="message.time"/></small>
+                                            <t t-if="message.sending">
+                                                <i class="fa fa-circle-o-notch fa-spin ms-1"/>
+                                            </t>
+                                            <t t-elif="message.failed">
+                                                <i class="fa fa-exclamation-circle text-danger ms-1"/>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+                        </t>
+                    </div>
+                    
+                    <!-- Message input -->
+                    <div class="message-input p-2 border-top">
+                        <div class="input-group">
+                            <textarea 
+                                class="form-control" 
+                                placeholder="Type a message..." 
+                                rows="1"
+                                t-model="state.newMessage"
+                                t-on-keydown="handleKeyDown"
+                            ></textarea>
+                            <button 
+                                class="btn btn-primary" 
+                                t-on-click="sendMessage"
+                                t-att-disabled="!state.newMessage.trim()"
+                            >
+                                <i class="fa fa-paper-plane"/> Send
+                            </button>
+                        </div>
+                    </div>
+                </t>
+            </div>
+        </div>
+    </t>
+</templates>

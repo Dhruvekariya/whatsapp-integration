@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- This file is needed for older Odoo versions, but in Odoo 17, assets are defined in the manifest -->
+    <data>
+        <!-- No content needed as assets are defined in __manifest__.py -->
+    </data>
+</odoo>

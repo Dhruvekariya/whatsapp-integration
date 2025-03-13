@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_live_chat_whatsapp_chat_user,live_chat.whatsapp.chat.user,model_live_chat_whatsapp_chat,base.group_user,1,1,1,0
+access_live_chat_whatsapp_message_user,live_chat.whatsapp.message.user,model_live_chat_whatsapp_message,base.group_user,1,1,1,0
+access_live_chat_whatsapp_chat_admin,live_chat.whatsapp.chat.admin,model_live_chat_whatsapp_chat,base.group_system,1,1,1,1
+access_live_chat_whatsapp_message_admin,live_chat.whatsapp.message.admin,model_live_chat_whatsapp_message,base.group_system,1,1,1,1

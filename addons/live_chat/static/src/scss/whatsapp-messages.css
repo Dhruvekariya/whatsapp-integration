@@ -1,0 +1,110 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f5;
+  }
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+  }
+  h1 {
+    color: #128C7E;
+    text-align: center;
+  }
+  .status {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 10px;
+    border-radius: 4px;
+  }
+  .loading {
+    background-color: #FFF9C4;
+    color: #FFA000;
+  }
+  .success {
+    background-color: #E8F5E9;
+    color: #2E7D32;
+  }
+  .error {
+    background-color: #FFEBEE;
+    color: #C62828;
+  }
+  .qr-container {
+    text-align: center;
+    margin: 20px 0;
+  }
+  .qr-code {
+    max-width: 250px;
+    margin: 0 auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+  }
+  .chat-list {
+    margin-top: 20px;
+  }
+  .chat {
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+  }
+  .chat-header {
+    background-color: #128C7E;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 4px 4px 0 0;
+    font-weight: bold;
+  }
+  .message {
+    padding: 10px 15px;
+    margin: 10px 0;
+    border-radius: 4px;
+    max-width: 80%;
+  }
+  .message-received {
+    background-color: #f1f0f0;
+    align-self: flex-start;
+  }
+  .message-sent {
+    background-color: #dcf8c6;
+    align-self: flex-end;
+    margin-left: auto;
+  }
+  .messages-container {
+    display: flex;
+    flex-direction: column;
+  }
+  .message-time {
+    font-size: 0.7em;
+    color: #999;
+    margin-top: 5px;
+    text-align: right;
+  }
+  .message-author {
+    font-size: 0.8em;
+    font-weight: bold;
+    margin-bottom: 3px;
+  }
+  .refresh-btn {
+    background-color: #128C7E;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    display: block;
+    margin: 20px auto;
+  }
+  .refresh-btn:hover {
+    background-color: #0b6156;
+  }
+  .no-messages {
+    text-align: center;
+    color: #999;
+    margin: 30px 0;
+  }
