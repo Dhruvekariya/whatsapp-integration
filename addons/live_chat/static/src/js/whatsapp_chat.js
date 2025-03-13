@@ -11,7 +11,8 @@ class WhatsAppChat extends Component {
             messages: {},
             activeChat: null,
             newMessage: "",
-            loading: true
+            loading: true,
+            socket : null
         });
 
         this.rpc = useService("rpc");
@@ -19,28 +20,87 @@ class WhatsAppChat extends Component {
 
         onMounted(() => {
             this.loadChats();
+            this.socket = new WebSocket("ws://localhost:3000");
+
+            this.socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === "newMessage") {
+                    console.log("data-=-=-=-=-", data.from);
+                    console.log("this.state.activeChat-=-=-=-=-", this.state.activeChat);
+                    const chatId = data.from;
+                    const message = data;
+                    if (this.state.activeChat && this.state.activeChat.chat_id === chatId) {
+
+                        let messagesData = this.state.messages
+
+                        
+                        // this.state.messages[this.state.activeChat.id].push({
+                        //     text: message.body,
+                        //     sender: "them",
+                        //     time: new Date(message.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+                        //     sending: false,
+                        //     failed: false
+                        // });
+                        messagesData?.[this.state.activeChat.id]?.push({
+                            text: message.body,
+                            sender: "them",
+                            time: new Date(message.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+                            sending: false,
+                            failed: false
+                        })
+
+                        console.log(".messages-=-=-=-=-", messagesData);
+                        
+                        this.state.messages = messagesData;
+                        
+                        setTimeout(() => this.scrollToBottom(), 100);
+                    }
+                    this.loadChats(false);
+                }
+            }
         });
     }
 
-    async loadChats() {
-        this.state.loading = true;
+    async loadChats(isLoading = true) {
+        if (isLoading) this.state.loading = true;
         try {
-            const chats = await this.rpc("/live_chat/whatsapp/chats");
+            const newChats = await this.rpc("/live_chat/whatsapp/chats");
+    
+            console.log("chats-=-=-=-=-", newChats);
+    
+            // Preserve sequence while updating data
+            const updatedChats = [];
+            for (let i = 0; i < newChats.length; i++) {
+                const newChat = newChats[i];
+    
+                // Find existing chat in the current state
+                const existingChat = this.state.chats.find(chat => chat.id === newChat.id);
 
-            console.log("chats-=-=-=-=-", chats);
-
-
-            this.state.chats = chats.map(chat => ({
-                ...chat,
-                isActive: this.state.activeChat && this.state.activeChat.id === chat.id
-
-            }));
+                if (existingChat) {
+                    // Update existing chat data
+                    Object.assign(existingChat, {...newChat, unread: newChat.unreadCount, });
+                    updatedChats.push(existingChat);
+                } else {
+                    // Add new chat
+                    updatedChats.push({ ...newChat });
+                }
+            }
+    
+            // Update state while maintaining the original sequence
+            this.state.chats = updatedChats;
+    
+            // Update active chat status
+            for (let i = 0; i < this.state.chats.length; i++) {
+                this.state.chats[i].isActive = this.state.activeChat && this.state.activeChat.id === this.state.chats[i].id;
+            }
+    
         } catch (error) {
             console.error("Error loading chats:", error);
         } finally {
             this.state.loading = false;
         }
     }
+    
 
     async refreshChats() {
 

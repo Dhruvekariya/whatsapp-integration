@@ -6,10 +6,14 @@ const cors = require('cors');
 const http = require("http");
 const socketIo = require('socket.io');
 const { Server } = require('socket.io');
+const WebSocket = require('ws');
+
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+// const io = socketIo(server);
+const wss = new WebSocket.Server({ server });
+
 
 
 const port = 3000;
@@ -51,51 +55,52 @@ function errorResponse(res, error, statusCode = 500) {
 
 // Emit QR Code via WebSocket
 client.on('qr', async (qr) => {
-    const qrCodeUrl1 = await qrcodeData.toDataURL(qr);
+    const qrCodeUrl = await qrcodeData.toDataURL(qr);
     qrcode.generate(qr, { small: true });
-    console.log("QR Code generated");
-    qrCodeData = qrCodeUrl1;
+    qrCodeData = qrCodeUrl;
 
-    io.emit("qrCode", qrCodeUrl1);  // Emit QR Code to frontend
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ type: 'qrCode', qrCode: qrCodeUrl }));
+        }
+    });
 });
 
 // Emit when WhatsApp is ready
 client.on('ready', () => {
     console.log('WhatsApp Client is Ready!');
-    console.log('Client info:', client.info);
-
-    io.emit("whatsappReady", true);  // Emit to clients
-
-    // Try to get chats right after client is ready
-    client.getChats().then(chats => {
-        console.log(`Found ${chats.length} chats`);
-        io.emit("chats", chats);
-        if (chats.length > 0) {
-            console.log('First chat example:', JSON.stringify(chats[0], null, 2));
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ type: 'whatsappReady', status: true }));
         }
-    }).catch(err => {
-        console.error('Error getting chats after client ready:', err);
     });
 });
 
 
-// Emit new messages to clients
+
+// Emit new messages
 client.on('message', async (message) => {
     console.log('New message received:', message.body);
-
-    // Emit received messages
-    io.emit("newMessage", {
-        id: message.id._serialized,
-        from: message.from,
-        body: message.body,
-        timestamp: message.timestamp
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+                type: 'newMessage',
+                id: message.id._serialized,
+                from: message.from,
+                body: message.body,
+                timestamp: message.timestamp
+            }));
+        }
     });
 });
 
 // Track message acknowledgments
 client.on('message_ack', (message, ack) => {
-    console.log(`Message ${message.id._serialized} status updated to: ${ack}`);
-    io.emit("messageAck", { id: message.id._serialized, ack });
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ type: 'messageAck', id: message.id._serialized, ack }));
+        }
+    });
 });
 
 // Start WhatsApp Client
@@ -107,25 +112,26 @@ app.get("/", (_req, res) => {
     return res.json({ success: true, message: "Server is running", clientInitialized: !!client });
 });
 
-// Send message via WebSocket
-io.on("connection", (socket) => {
-    console.log("Client connected:", socket.id);
 
-    socket.on("sendMessage", async ({ chatId, message }) => {
+// WebSocket connection handler
+wss.on('connection', (ws) => {
+    console.log("New WebSocket client connected");
+
+    ws.on('message', async (message) => {
         try {
-            const sentMessage = await client.sendMessage(chatId, message);
-            io.emit("messageSent", {
-                messageId: sentMessage.id._serialized,
-                timestamp: sentMessage.timestamp,
-            });
+            const data = JSON.parse(message);
+            if (data.type === 'sendMessage') {
+                const sentMessage = await client.sendMessage(data.chatId, data.message);
+                ws.send(JSON.stringify({ type: 'messageSent', messageId: sentMessage.id._serialized, timestamp: sentMessage.timestamp }));
+            }
         } catch (error) {
-            console.error("Error sending message:", error);
-            socket.emit("error", { message: "Failed to send message" });
+            console.error("Error processing WebSocket message:", error);
+            ws.send(JSON.stringify({ type: 'error', message: 'Failed to process request' }));
         }
     });
 
-    socket.on("disconnect", () => {
-        console.log("Client disconnected:", socket.id);
+    ws.on('close', () => {
+        console.log("WebSocket client disconnected");
     });
 });
 
