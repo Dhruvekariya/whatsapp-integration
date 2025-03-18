@@ -48,7 +48,7 @@ class WhatsAppController(http.Controller):
                 old_chats = request.env["live_chat.whatsapp.chat"].sudo().search([])
                 old_count = len(old_chats)
                 old_chats.unlink()
-                _logger.info("Deleted %s existing chats for session: %s", old_count)
+                _logger.info("Deleted %s existing chats for session: %s", old_count, request.session.session_id)
 
                 # Create new chat records
                 chat_records = []

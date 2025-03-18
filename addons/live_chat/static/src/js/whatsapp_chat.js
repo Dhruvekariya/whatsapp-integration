@@ -12,11 +12,13 @@ class WhatsAppChat extends Component {
             activeChat: null,
             newMessage: "",
             loading: true,
-            socket : null
+            socket: null,
+            attachment: null, // For storing the selected file
         });
 
         this.rpc = useService("rpc");
         this.messageListRef = useRef("messageList");
+        this.fileInputRef = useRef("fileInput");
 
         onMounted(() => {
             this.loadChats();
@@ -33,20 +35,15 @@ class WhatsAppChat extends Component {
 
                         let messagesData = this.state.messages
 
-                        
-                        // this.state.messages[this.state.activeChat.id].push({
-                        //     text: message.body,
-                        //     sender: "them",
-                        //     time: new Date(message.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
-                        //     sending: false,
-                        //     failed: false
-                        // });
                         messagesData?.[this.state.activeChat.id]?.push({
                             text: message.body,
                             sender: "them",
                             time: new Date(message.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
                             sending: false,
-                            failed: false
+                            failed: false,
+                            hasAttachment: message.hasAttachment || false,
+                            attachmentName: message.attachmentName || null,
+                            attachmentUrl: message.attachmentUrl || null
                         })
 
                         console.log(".messages-=-=-=-=-", messagesData);
@@ -101,9 +98,7 @@ class WhatsAppChat extends Component {
         }
     }
     
-
     async refreshChats() {
-
         await this.loadChats();
     }
 
@@ -115,6 +110,9 @@ class WhatsAppChat extends Component {
         }));
 
         this.state.activeChat = chat;
+        
+        // Clear any existing attachment when switching chats
+        this.state.attachment = null;
 
         // Load messages if not already loaded
         if (!this.state.messages[chat.id]) {
@@ -131,9 +129,12 @@ class WhatsAppChat extends Component {
                     return {
                         text: msg?.body,
                         sender: msg?.fromMe ? "me" : "them",
-                        time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' ,hour12: false }),
+                        time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
                         sending: msg?.status === 'sending',
-                        failed: msg?.status === 'failed'
+                        failed: msg?.status === 'failed',
+                        hasAttachment: msg?.hasMedia || false,
+                        attachmentName: msg?.mediaFilename || null,
+                        attachmentUrl: msg?.mediaUrl || null
                     };
                 });
 
@@ -162,14 +163,72 @@ class WhatsAppChat extends Component {
         }
     }
 
+    // File attachment methods
+    openFileManager() {
+        // Trigger click on the hidden file input
+        if (this.fileInputRef.el) {
+            this.fileInputRef.el.click();
+        }
+    }
+
+    handleFileChange(event) {
+        const files = event.target.files;
+        if (files && files.length > 0) {
+            const file = files[0];
+            // Store the file in state
+            this.state.attachment = {
+                file: file,
+                name: file.name,
+                type: file.type,
+                size: file.size
+            };
+        }
+    }
+
+    removeAttachment() {
+        this.state.attachment = null;
+        if (this.fileInputRef.el) {
+            this.fileInputRef.el.value = null; // Clear the file input
+        }
+    }
+
+    async uploadFile(file) {
+        try {
+            // Create form data for file upload
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('chatId', this.state.activeChat.chat_id);
+            
+            // Upload the file
+            const response = await fetch('http://localhost:3000/upload-file', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error("Error uploading file:", error);
+            throw error;
+        }
+    }
+
     async sendMessage() {
-        if (!this.state.newMessage.trim() || !this.state.activeChat) {
+        if ((!this.state.newMessage.trim() && !this.state.attachment) || !this.state.activeChat) {
             return;
         }
 
         const messageText = this.state.newMessage;
         this.state.newMessage = "";
-
+        
+        // Prepare attachment data if present
+        const hasAttachment = !!this.state.attachment;
+        const attachmentData = hasAttachment ? {
+            name: this.state.attachment.name,
+            type: this.state.attachment.type,
+            size: this.state.attachment.size
+        } : null;
+        
         // Create temporary message object
         const tempMessage = {
             id: `temp-${Date.now()}`,
@@ -177,7 +236,10 @@ class WhatsAppChat extends Component {
             sender: 'me',
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             sending: true,
-            failed: false
+            failed: false,
+            hasAttachment: hasAttachment,
+            attachmentName: hasAttachment ? this.state.attachment.name : null,
+            attachmentUrl: null // URL will be set after upload
         };
 
         // Add to messages
@@ -190,22 +252,55 @@ class WhatsAppChat extends Component {
         setTimeout(() => this.scrollToBottom(), 100);
 
         try {
-            // Send message via RPC
-
-            const data = await fetch("http://localhost:3000/send-message", {
-                method: "POST",
-                body: JSON.stringify({
-                    "chatId": this.state.activeChat.chat_id,
-                    "message": messageText
-                }),
-                headers: {
-                    "Content-Type": "application/json"
+            let result;
+            
+            // Handle file upload if attachment exists
+            if (hasAttachment) {
+                // First upload the file
+                const uploadResult = await this.uploadFile(this.state.attachment.file);
+                
+                if (uploadResult.success && uploadResult.data) {
+                    // Then send message with attachment info
+                    const response = await fetch("http://localhost:3000/send-media", {
+                        method: "POST",
+                        body: JSON.stringify({
+                            chatId: this.state.activeChat.chat_id,
+                            message: messageText || " ", // WhatsApp requires at least a space for caption
+                            mediaUrl: uploadResult.data.url,
+                            fileName: this.state.attachment.name
+                        }),
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    });
+                    
+                    result = await response.json();
+                    
+                    // Update attachment URL in the temp message
+                    const messageIndex = this.state.messages[this.state.activeChat.id]
+                        .findIndex(m => m.id === tempMessage.id);
+                        
+                    if (messageIndex >= 0) {
+                        this.state.messages[this.state.activeChat.id][messageIndex].attachmentUrl = uploadResult.data.url;
+                    }
+                } else {
+                    throw new Error("File upload failed");
                 }
-            })
-
-
-
-            const result = data.json()
+            } else {
+                // Send regular text message
+                const response = await fetch("http://localhost:3000/send-message", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        "chatId": this.state.activeChat.chat_id,
+                        "message": messageText
+                    }),
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
+                
+                result = await response.json();
+            }
 
             if (result.success) {
                 // Update temporary message with real message data
@@ -214,7 +309,7 @@ class WhatsAppChat extends Component {
 
                 if (messageIndex >= 0) {
                     this.state.messages[this.state.activeChat.id][messageIndex] = {
-                        ...result.message,
+                        ...tempMessage,
                         text: messageText,
                         time: new Date(result.data?.timestamp).toLocaleTimeString([], {
                             hour: '2-digit',
@@ -223,6 +318,12 @@ class WhatsAppChat extends Component {
                         sending: false,
                         failed: false
                     };
+                }
+
+                // Clear attachment state
+                this.state.attachment = null;
+                if (this.fileInputRef.el) {
+                    this.fileInputRef.el.value = null;
                 }
 
                 // Refresh chat list to update last messages
@@ -234,7 +335,7 @@ class WhatsAppChat extends Component {
 
                 if (messageIndex >= 0) {
                     this.state.messages[this.state.activeChat.id][messageIndex].sending = false;
-                    this.state.messages[this.state.activeChat.id][messageIndex].failed = false;
+                    this.state.messages[this.state.activeChat.id][messageIndex].failed = true;
                 }
 
                 console.error("Failed to send message:", result.error);

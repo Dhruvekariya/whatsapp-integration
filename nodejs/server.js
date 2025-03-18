@@ -7,7 +7,9 @@ const http = require("http");
 const socketIo = require('socket.io');
 const { Server } = require('socket.io');
 const WebSocket = require('ws');
-
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -32,9 +34,161 @@ const client = new Client({
         executablePath: require('puppeteer').executablePath()
     }
 });
+// Create uploads directory if it doesn't exist
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)){
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        // Create unique filename
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
 
+const upload = multer({ 
+    storage: storage,
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit
+    }
+});
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(uploadDir));
+
+// File upload endpoint
+app.post('/upload-file', upload.single('file'), (req, res) => {
+    try {
+        if (!req.file) {
+            return errorResponse(res, new Error("No file uploaded"), 400);
+        }
+
+        const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        
+        return successResponse(res, {
+            filename: req.file.filename,
+            originalname: req.file.originalname,
+            mimetype: req.file.mimetype,
+            size: req.file.size,
+            url: fileUrl
+        }, "File uploaded successfully");
+    } catch (error) {
+        return errorResponse(res, error);
+    }
+});
+
+// Enhanced media sending endpoint
+app.post("/send-media", async (req, res) => {
+    try {
+        const { chatId, message, mediaUrl, fileName } = req.body;
+
+        if (!chatId || !mediaUrl) {
+            return errorResponse(res, new Error("Chat ID and media URL are required"), 400);
+        }
+
+        if (!client.info) {
+            return errorResponse(res, new Error("WhatsApp client not authenticated"), 403);
+        }
+
+        console.log(`Sending media to ${chatId} from URL: ${mediaUrl}`);
+
+        // Create a MessageMedia object using the URL
+        const { MessageMedia } = require('whatsapp-web.js');
+        let media;
+        
+        // If it's a local URL from our uploads directory
+        if (mediaUrl.includes('/uploads/')) {
+            const filePath = path.join(uploadDir, path.basename(mediaUrl));
+            media = MessageMedia.fromFilePath(filePath);
+            // Set filename if provided
+            if (fileName) {
+                media.filename = fileName;
+            }
+        } else {
+            // External URL
+            media = await MessageMedia.fromUrl(mediaUrl);
+        }
+
+        // Send the media
+        const sentMessage = await client.sendMessage(chatId, media, { 
+            caption: message,
+            sendMediaAsDocument: media.mimetype.startsWith('application/')
+        });
+
+        return successResponse(res, {
+            messageId: sentMessage.id._serialized,
+            timestamp: sentMessage.timestamp
+        }, "Media sent successfully");
+    } catch (error) {
+        console.error("Error sending media:", error);
+        return errorResponse(res, error);
+    }
+});
+
+// Add new WebSocket message handler for file attachments
+wss.on('connection', (ws) => {
+    console.log("New WebSocket client connected");
+
+    ws.on('message', async (message) => {
+        try {
+            const data = JSON.parse(message);
+            if (data.type === 'sendMessage') {
+                const sentMessage = await client.sendMessage(data.chatId, data.message);
+                ws.send(JSON.stringify({ type: 'messageSent', messageId: sentMessage.id._serialized, timestamp: sentMessage.timestamp }));
+            }
+            // Add handling for file attachments
+            else if (data.type === 'sendFile') {
+                const { MessageMedia } = require('whatsapp-web.js');
+                let media;
+                
+                if (data.fileData) {
+                    // Base64 encoded file data
+                    media = new MessageMedia(data.mimeType, data.fileData, data.fileName);
+                } else if (data.fileUrl) {
+                    // File URL
+                    if (data.fileUrl.startsWith('http')) {
+                        media = await MessageMedia.fromUrl(data.fileUrl);
+                    } else {
+                        // Local file path
+                        media = MessageMedia.fromFilePath(data.fileUrl);
+                    }
+                    if (data.fileName) {
+                        media.filename = data.fileName;
+                    }
+                }
+                
+                const sentMessage = await client.sendMessage(
+                    data.chatId, 
+                    media, 
+                    { 
+                        caption: data.caption || '',
+                        sendMediaAsDocument: media.mimetype.startsWith('application/')
+                    }
+                );
+                
+                ws.send(JSON.stringify({ 
+                    type: 'fileSent', 
+                    messageId: sentMessage.id._serialized, 
+                    timestamp: sentMessage.timestamp 
+                }));
+            }
+        } catch (error) {
+            console.error("Error processing WebSocket message:", error);
+            ws.send(JSON.stringify({ type: 'error', message: 'Failed to process request' }));
+        }
+    });
+
+    ws.on('close', () => {
+        console.log("WebSocket client disconnected");
+    });
+});
 // Helper functions for standardized responses
 function successResponse(res, data, message = 'Success') {
     return res.json({
