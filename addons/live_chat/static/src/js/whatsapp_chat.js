@@ -35,10 +35,15 @@ class WhatsAppChat extends Component {
 
                         let messagesData = this.state.messages
 
+                        // Format timestamp from server using actual timestamp
+                        const messageTime = message.timestamp 
+                            ? new Date(message.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+                            : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
                         messagesData?.[this.state.activeChat.id]?.push({
                             text: message.body,
                             sender: "them",
-                            time: new Date(message.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+                            time: messageTime,
                             sending: false,
                             failed: false,
                             hasAttachment: message.hasAttachment || false,
@@ -124,8 +129,10 @@ class WhatsAppChat extends Component {
                 let messagesData = await messages.json()
 
                 this.state.messages[chat.id] = messagesData?.data?.messages.map(msg => {
-                    // Format date for display
-                    const date = new Date(msg.timestamp * 1000);
+                    // Format date using the timestamp from server
+                    const timestamp = msg?.timestamp ? msg.timestamp * 1000 : Date.now();
+                    const date = new Date(timestamp);
+                    
                     return {
                         text: msg?.body,
                         sender: msg?.fromMe ? "me" : "them",
@@ -221,6 +228,10 @@ class WhatsAppChat extends Component {
         const messageText = this.state.newMessage;
         this.state.newMessage = "";
         
+        // Get current timestamp
+        const currentTimestamp = Date.now();
+        const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+        
         // Prepare attachment data if present
         const hasAttachment = !!this.state.attachment;
         const attachmentData = hasAttachment ? {
@@ -229,12 +240,12 @@ class WhatsAppChat extends Component {
             size: this.state.attachment.size
         } : null;
         
-        // Create temporary message object
+        // Create temporary message object with current real time
         const tempMessage = {
-            id: `temp-${Date.now()}`,
+            id: `temp-${currentTimestamp}`,
             text: messageText,
             sender: 'me',
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            time: currentTime,
             sending: true,
             failed: false,
             hasAttachment: hasAttachment,
@@ -303,18 +314,20 @@ class WhatsAppChat extends Component {
             }
 
             if (result.success) {
-                // Update temporary message with real message data
+                // Update temporary message with real message data from server response
                 const messageIndex = this.state.messages[this.state.activeChat.id]
                     .findIndex(m => m.id === tempMessage.id);
 
                 if (messageIndex >= 0) {
+                    // Use server timestamp if available, otherwise keep the original time
+                    const messageTime = result.data?.timestamp 
+                        ? new Date(result.data.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+                        : tempMessage.time;
+                        
                     this.state.messages[this.state.activeChat.id][messageIndex] = {
                         ...tempMessage,
                         text: messageText,
-                        time: new Date(result.data?.timestamp).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        }),
+                        time: messageTime,
                         sending: false,
                         failed: false
                     };
