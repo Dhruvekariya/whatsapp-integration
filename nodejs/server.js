@@ -233,17 +233,55 @@ client.on('ready', () => {
 
 
 // Emit new messages
+// Server-side (server.js) - Modified WebSocket message handler
 client.on('message', async (message) => {
-    console.log('New message received:', message.body);
+    console.log('New message received:', message.type || 'text');
+    
+    // Base message object
+    const messageData = {
+        type: 'newMessage',
+        id: message.id._serialized,
+        from: message.from,
+        body: message.body,
+        timestamp: message.timestamp
+    };
+    
+    // Handle different message types
+    if (message.hasMedia) {
+        try {
+            // Download the media
+            const media = await message.downloadMedia();
+            
+            // Determine media type
+            let attachmentType = 'document';
+            if (media.mimetype.startsWith('image/')) {
+                attachmentType = 'image';
+            } else if (media.mimetype.startsWith('video/')) {
+                attachmentType = 'video';
+            } else if (media.mimetype.startsWith('audio/')) {
+                attachmentType = 'audio';
+            } else if (message.type === 'ptt') {
+                attachmentType = 'ptt'; // Voice note
+            }
+            
+            // Add attachment info to message data
+            messageData.hasAttachment = true;
+            messageData.attachmentType = attachmentType;
+            messageData.attachmentName = media.filename || `${attachmentType}-${Date.now()}`;
+            messageData.attachmentMimeType = media.mimetype;
+            
+            // Convert the media data to a data URL
+            messageData.attachmentUrl = `data:${media.mimetype};base64,${media.data}`;
+        } catch (err) {
+            console.error('Error downloading media:', err);
+            messageData.hasAttachment = false;
+        }
+    }
+    
+    // Send to all connected WebSocket clients
     wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({
-                type: 'newMessage',
-                id: message.id._serialized,
-                from: message.from,
-                body: message.body,
-                timestamp: message.timestamp
-            }));
+            client.send(JSON.stringify(messageData));
         }
     });
 });

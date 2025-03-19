@@ -23,43 +23,51 @@ class WhatsAppChat extends Component {
         onMounted(() => {
             this.loadChats();
             this.socket = new WebSocket("ws://localhost:3000");
-
+            
             this.socket.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 if (data.type === "newMessage") {
-                    console.log("data-=-=-=-=-", data.from);
-                    console.log("this.state.activeChat-=-=-=-=-", this.state.activeChat);
+                    console.log("Received message with type:", data.hasAttachment ? data.attachmentType : "text");
                     const chatId = data.from;
-                    const message = data;
+                    
                     if (this.state.activeChat && this.state.activeChat.chat_id === chatId) {
-
-                        let messagesData = this.state.messages
-
-                        // Format timestamp from server using actual timestamp
-                        const messageTime = message.timestamp 
-                            ? new Date(message.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+                        // Format timestamp
+                        const messageTime = data.timestamp
+                            ? new Date(data.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
                             : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-
-                        messagesData?.[this.state.activeChat.id]?.push({
-                            text: message.body,
+                        
+                        // Create message object with all necessary attachment info
+                        const newMessage = {
+                            text: data.body,
                             sender: "them",
                             time: messageTime,
                             sending: false,
                             failed: false,
-                            hasAttachment: message.hasAttachment || false,
-                            attachmentName: message.attachmentName || null,
-                            attachmentUrl: message.attachmentUrl || null
-                        })
-
-                        console.log(".messages-=-=-=-=-", messagesData);
+                            hasAttachment: data.hasAttachment || false,
+                            attachmentType: data.attachmentType || null,
+                            attachmentName: data.attachmentName || null,
+                            attachmentUrl: data.attachmentUrl || null,
+                            attachmentMimeType: data.attachmentMimeType || null
+                        };
                         
-                        this.state.messages = messagesData;
+                        // Check if messages for this chat exist, create if not
+                        if (!this.state.messages[this.state.activeChat.id]) {
+                            this.state.messages[this.state.activeChat.id] = [];
+                        }
                         
+                        // Add the new message
+                        this.state.messages[this.state.activeChat.id].push(newMessage);
+                        
+                        // Force update the state to trigger re-render
+                        this.state.messages = {...this.state.messages};
+                        
+                        // Scroll to bottom
                         setTimeout(() => this.scrollToBottom(), 100);
                     }
+                    
                     this.loadChats(false);
                 }
-            }
+            };
         });
     }
 

@@ -74,7 +74,6 @@
                                         <t t-if="message.hasAttachment">
                                             <div class="message-attachment mt-1 p-1 rounded border">
                                                 <div class="d-flex align-items-center">
-                                                    <i class="fa fa-file me-2"></i>
                                                     <div class="flex-grow-1 text-truncate">
                                                         <t t-esc="message.attachmentName"/>
                                                     </div>
@@ -94,8 +93,7 @@
                                                             Your browser does not support the video tag.
                                                         </video>
                                                     </t>
-
-                                                    <t t-elif="message.attachmentType == 'ppt'">
+                                                    <t t-elif="message.attachmentType == 'audio' or message.attachmentType == 'ptt'">
                                                         <audio t-att-controls="'true'" class="mt-2">
                                                             <source t-att-src="message.attachmentUrl" type="audio/ogg"></source>
                                                             Your browser does not support the audio element.
@@ -116,7 +114,6 @@
                                                     target="_blank" 
                                                     class="ms-2 text-decoration-none"
                                                     t-att-class="message.sender === 'me' ? 'text-white' : 'text-primary'">
-                                                        <i class="fa fa-external-link"></i>
                                                     </a>
                                                 </div>
                                             </div>
