@@ -236,24 +236,21 @@ client.on('ready', () => {
 // Server-side (server.js) - Modified WebSocket message handler
 client.on('message', async (message) => {
     console.log('New message received:', message.type || 'text');
-    
-    // Base message object
+
     const messageData = {
         type: 'newMessage',
         id: message.id._serialized,
         from: message.from,
-        body: message.body,
-        timestamp: message.timestamp
+        body: message.body && message.body.trim() !== "" ? message.body : null, // Ensure empty messages are NULL
+        timestamp: message.timestamp,
+        hasAttachment: false
     };
-    
-    // Handle different message types
+
     if (message.hasMedia) {
         try {
-            // Download the media
             const media = await message.downloadMedia();
-            
-            // Determine media type
             let attachmentType = 'document';
+
             if (media.mimetype.startsWith('image/')) {
                 attachmentType = 'image';
             } else if (media.mimetype.startsWith('video/')) {
@@ -261,30 +258,31 @@ client.on('message', async (message) => {
             } else if (media.mimetype.startsWith('audio/')) {
                 attachmentType = 'audio';
             } else if (message.type === 'ptt') {
-                attachmentType = 'ptt'; // Voice note
+                attachmentType = 'ptt';
             }
-            
-            // Add attachment info to message data
+
             messageData.hasAttachment = true;
             messageData.attachmentType = attachmentType;
-            messageData.attachmentName = media.filename || `${attachmentType}-${Date.now()}`;
             messageData.attachmentMimeType = media.mimetype;
-            
-            // Convert the media data to a data URL
             messageData.attachmentUrl = `data:${media.mimetype};base64,${media.data}`;
+
+            // Only assign filename if it's a document type
+            if (attachmentType === "document") {
+                messageData.attachmentName = media.filename || `${attachmentType}-${Date.now()}`;
+            }
         } catch (err) {
             console.error('Error downloading media:', err);
             messageData.hasAttachment = false;
         }
     }
-    
-    // Send to all connected WebSocket clients
+
     wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify(messageData));
         }
     });
 });
+
 
 // Track message acknowledgments
 client.on('message_ack', (message, ack) => {

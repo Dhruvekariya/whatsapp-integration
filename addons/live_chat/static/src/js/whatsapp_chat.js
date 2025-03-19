@@ -26,18 +26,19 @@ class WhatsAppChat extends Component {
             
             this.socket.onmessage = (event) => {
                 const data = JSON.parse(event.data);
+                
                 if (data.type === "newMessage") {
-                    console.log("Received message with type:", data.hasAttachment ? data.attachmentType : "text");
+                    console.log("Received message type:", data.hasAttachment ? data.attachmentType : "text");
+            
                     const chatId = data.from;
-                    
+            
                     if (this.state.activeChat && this.state.activeChat.chat_id === chatId) {
                         // Format timestamp
                         const messageTime = data.timestamp
                             ? new Date(data.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
                             : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-                        
-                        // Create message object with all necessary attachment info
-                        const newMessage = {
+            
+                        let newMessage = {
                             text: data.body,
                             sender: "them",
                             time: messageTime,
@@ -49,25 +50,43 @@ class WhatsAppChat extends Component {
                             attachmentUrl: data.attachmentUrl || null,
                             attachmentMimeType: data.attachmentMimeType || null
                         };
-                        
-                        // Check if messages for this chat exist, create if not
+            
+                        // **Handle attachments differently**
+                        if (data.hasAttachment) {
+                            if (data.attachmentType === "image" && !data.body) {
+                                // Only image, no text
+                                newMessage.text = null;
+                            } else if (data.attachmentType === "image" && data.body) {
+                                // Image with text
+                                newMessage.text = data.body;
+                            } else if (data.attachmentType === "video") {
+                                // Video handling
+                                newMessage.videoPreview = true; // Custom property to handle UI
+                            } else if (data.attachmentType === "document" && data.attachmentMimeType.includes("pdf")) {
+                                // PDF handling (show preview like WhatsApp)
+                                newMessage.showPdfPreview = true;
+                            }
+                        }
+            
+                        // Check if chat messages exist, create array if not
                         if (!this.state.messages[this.state.activeChat.id]) {
                             this.state.messages[this.state.activeChat.id] = [];
                         }
-                        
-                        // Add the new message
+            
+                        // Add new message
                         this.state.messages[this.state.activeChat.id].push(newMessage);
-                        
-                        // Force update the state to trigger re-render
-                        this.state.messages = {...this.state.messages};
-                        
+            
+                        // Force update state
+                        this.state.messages = { ...this.state.messages };
+            
                         // Scroll to bottom
                         setTimeout(() => this.scrollToBottom(), 100);
                     }
-                    
+            
                     this.loadChats(false);
                 }
-            };
+            };            
+            
         });
     }
 
