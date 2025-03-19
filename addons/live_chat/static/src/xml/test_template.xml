@@ -78,11 +78,44 @@
                                                     <div class="flex-grow-1 text-truncate">
                                                         <t t-esc="message.attachmentName"/>
                                                     </div>
+
+                                                    <!-- Render attachment based on type -->
+                                                    <t t-if="message.attachmentType == 'image'">
+                                                        <img t-att-src="message.attachmentUrl" 
+                                                            class="img-fluid rounded mt-2" 
+                                                            alt="Image Attachment" 
+                                                            style="max-width: 200px;">
+                                                        </img>
+                                                    </t>
+
+                                                    <t t-elif="message.attachmentType == 'video'">
+                                                        <video class="w-100 mt-2" style="max-width: 300px;" t-att-controls="'controls'">
+                                                            <source t-att-src="message.attachmentUrl" t-att-type="'video/mp4'"></source>
+                                                            Your browser does not support the video tag.
+                                                        </video>
+                                                    </t>
+
+                                                    <t t-elif="message.attachmentType == 'ppt'">
+                                                        <audio t-att-controls="'true'" class="mt-2">
+                                                            <source t-att-src="message.attachmentUrl" type="audio/ogg"></source>
+                                                            Your browser does not support the audio element.
+                                                        </audio>
+                                                    </t>
+
+                                                    <t t-elif="message.attachmentType == 'document'">
+                                                        <a t-att-href="message.attachmentUrl" 
+                                                        download="document" 
+                                                        class="ms-2 text-decoration-none">
+                                                            <i class="fa fa-file-download"></i> Download File
+                                                        </a>
+                                                    </t>
+
+                                                    <!-- External link fallback -->
                                                     <a t-if="message.attachmentUrl" 
-                                                       t-att-href="message.attachmentUrl" 
-                                                       target="_blank" 
-                                                       class="ms-2 text-decoration-none"
-                                                       t-att-class="message.sender === 'me' ? 'text-white' : 'text-primary'">
+                                                    t-att-href="message.attachmentUrl" 
+                                                    target="_blank" 
+                                                    class="ms-2 text-decoration-none"
+                                                    t-att-class="message.sender === 'me' ? 'text-white' : 'text-primary'">
                                                         <i class="fa fa-external-link"></i>
                                                     </a>
                                                 </div>

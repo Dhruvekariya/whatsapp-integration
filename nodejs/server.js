@@ -411,15 +411,30 @@ app.get("/get-messages/:chatId", async (req, res) => {
 
         console.log(`Retrieved ${messages.length} messages`);
 
-        const formattedMessages = messages.map(msg => ({
-            id: msg.id._serialized || msg.id,
-            body: msg.body,
-            fromMe: msg.fromMe,
-            timestamp: msg.timestamp,
-            type: msg.type,
-            hasMedia: msg.hasMedia,
-            author: msg.author || null
-        }));
+        const formattedMessages = await Promise.all(
+            messages.map(async (msg) => {
+                let mediaBase64 = null;
+
+                if (msg.hasMedia) {
+                    const media = await msg.downloadMedia();
+                    if (media) {
+                        mediaBase64 = `data:${media.mimetype};base64,${media.data}`;
+                        
+                    }
+                }
+
+                return {
+                    id: msg.id._serialized || msg.id,
+                    body: msg.body || "",
+                    fromMe: msg.fromMe,
+                    timestamp: msg.timestamp,
+                    type: msg.type,
+                    hasMedia: msg.hasMedia,
+                    mediaBase64: mediaBase64,
+                    author: msg.author || null,
+                };
+            })
+        );
 
         return successResponse(res, {
             messages: formattedMessages,

@@ -132,6 +132,9 @@ class WhatsAppChat extends Component {
                     // Format date using the timestamp from server
                     const timestamp = msg?.timestamp ? msg.timestamp * 1000 : Date.now();
                     const date = new Date(timestamp);
+
+                    console.log("msg----",msg);
+                    
                     
                     return {
                         text: msg?.body,
@@ -141,7 +144,8 @@ class WhatsAppChat extends Component {
                         failed: msg?.status === 'failed',
                         hasAttachment: msg?.hasMedia || false,
                         attachmentName: msg?.mediaFilename || null,
-                        attachmentUrl: msg?.mediaUrl || null
+                        attachmentUrl: msg?.mediaBase64 || null,
+                        attachmentType: msg?.type || null
                     };
                 });
 
