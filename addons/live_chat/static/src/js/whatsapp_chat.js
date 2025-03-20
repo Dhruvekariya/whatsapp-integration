@@ -13,7 +13,9 @@ class WhatsAppChat extends Component {
             newMessage: "",
             loading: true,
             socket: null,
-            attachment: null, // For storing the selected file
+            attachment: null,
+            searchQuery: "", // Added for search functionality
+            filteredChats: [], // Will store filtered chats based on search
         });
 
         this.rpc = useService("rpc");
@@ -90,12 +92,38 @@ class WhatsAppChat extends Component {
         });
     }
 
+    // Method to handle search input changes
+    handleSearchInput(event) {
+        const query = event.target.value.toLowerCase();
+        this.state.searchQuery = query;
+        
+        if (query.trim() === "") {
+            // If search is empty, show all chats
+            this.state.filteredChats = [...this.state.chats];
+        } else {
+            // Filter chats based on search query
+            this.state.filteredChats = this.state.chats.filter(chat => 
+                chat.name.toLowerCase().includes(query) || 
+                (chat.last_message && chat.last_message.toLowerCase().includes(query))
+            );
+        }
+    }
+
     async loadChats(isLoading = true) {
         if (isLoading) this.state.loading = true;
         try {
             const newChats = await this.rpc("/live_chat/whatsapp/chats");
     
             console.log("chats-=-=-=-=-", newChats);
+    
+            // Ensure each chat has a valid profile picture URL or placeholder
+            for (let chat of newChats) {
+                if (!chat.imageUrl) {
+                    // Generate a placeholder image URL based on the contact name
+                    // This is a temporary solution until you implement actual profile pictures
+                    chat.imageUrl = `/web/image/res.partner/${chat.id}/avatar_128`;
+                }
+            }
     
             // Preserve sequence while updating data
             const updatedChats = [];
@@ -107,7 +135,7 @@ class WhatsAppChat extends Component {
 
                 if (existingChat) {
                     // Update existing chat data
-                    Object.assign(existingChat, {...newChat, unread: newChat.unreadCount, });
+                    Object.assign(existingChat, {...newChat, unread: newChat.unreadCount});
                     updatedChats.push(existingChat);
                 } else {
                     // Add new chat
@@ -117,6 +145,14 @@ class WhatsAppChat extends Component {
     
             // Update state while maintaining the original sequence
             this.state.chats = updatedChats;
+            
+            // Initialize filtered chats with all chats
+            if (this.state.searchQuery.trim() === "") {
+                this.state.filteredChats = [...this.state.chats];
+            } else {
+                // Apply current search filter
+                this.handleSearchInput({ target: { value: this.state.searchQuery } });
+            }
     
             // Update active chat status
             for (let i = 0; i < this.state.chats.length; i++) {
