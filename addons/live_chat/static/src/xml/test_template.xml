@@ -200,9 +200,32 @@
                     
                     <!-- Message input -->
                     <div class="message-input p-2 border-top" style="background-color: #f0f2f5;">
+                        <!-- Recording interface -->
+                        <t t-if="state.isRecording">
+                            <div class="recording-interface d-flex align-items-center justify-content-between bg-white p-2 rounded">
+                                <div class="d-flex align-items-center">
+                                    <i class="fa fa-microphone text-danger me-2"></i>
+                                    <span class="recording-time">Recording... <t t-esc="formatTime(state.recordingTime)"/></span>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-danger me-2" t-on-click="cancelAudioRecording">
+                                        <i class="fa fa-trash"></i> Cancel
+                                    </button>
+                                    <button class="btn btn-sm btn-success" t-on-click="sendAudioMessage">
+                                        <i class="fa fa-paper-plane"></i> Send
+                                    </button>
+                                </div>
+                            </div>
+                        </t>
+                        
                         <!-- File attachment preview -->
                         <div t-if="state.attachment" class="attachment-preview mb-2 p-2 bg-white rounded d-flex align-items-center">
-                            <i class="fa fa-file me-2"></i>
+                            <t t-if="state.attachment.mediaType === 'audio'">
+                                <i class="fa fa-microphone me-2"></i>
+                            </t>
+                            <t t-else="">
+                                <i class="fa fa-file me-2"></i>
+                            </t>
                             <div class="flex-grow-1 text-truncate">
                                 <t t-esc="state.attachment.name"/>
                             </div>
@@ -210,50 +233,54 @@
                                 <i class="fa fa-times"></i>
                             </button>
                         </div>
-                        <div class="input-group">
-                            <!-- Emoji button -->
-                            <button class="btn btn-link text-muted" t-on-click="toggleEmojiPicker">
-                                <i class="fa fa-smile-o fs-5"></i>
-                            </button>
-                            <!-- Hidden file input -->
-                            <input 
-                                type="file" 
-                                class="d-none" 
-                                t-ref="fileInput"
-                                t-on-change="handleFileChange"
-                            />
-                            <!-- Attachment button -->
-                            <button 
-                                class="btn btn-link text-muted" 
-                                type="button"
-                                t-on-click="openFileManager"
-                            >
-                                <i class="fa fa-paperclip fs-5"></i>
-                            </button>
-                            <textarea 
-                                class="form-control border-0 bg-white rounded-pill"
-                                placeholder="Type a message..." 
-                                rows="1"
-                                t-model="state.newMessage"
-                                t-on-keydown="handleKeyDown"
-                            ></textarea>
-                            <!-- Send button -->
-                            <button 
-                                t-if="state.newMessage.trim() || state.attachment"
-                                class="btn btn-link text-success" 
-                                t-on-click="sendMessage"
-                            >
-                                <i class="fa fa-paper-plane fs-5"></i>
-                            </button>
-                            <!-- Microphone button for audio recording -->
-                            <button 
-                                t-if="!state.newMessage.trim() &amp;&amp; !state.attachment"
-                                class="btn btn-link text-success" 
-                                t-on-click="startAudioRecording"
-                            >
-                                <i class="fa fa-microphone fs-5"></i>
-                            </button>
-                        </div>
+                        
+                        <!-- Normal input area (only show when not recording) -->
+                        <t t-if="!state.isRecording">
+                            <div class="input-group">
+                                <!-- Emoji button -->
+                                <button class="btn btn-link text-muted" t-on-click="toggleEmojiPicker">
+                                    <i class="fa fa-smile-o fs-5"></i>
+                                </button>
+                                <!-- Hidden file input -->
+                                <input 
+                                    type="file" 
+                                    class="d-none" 
+                                    t-ref="fileInput"
+                                    t-on-change="handleFileChange"
+                                />
+                                <!-- Attachment button -->
+                                <button 
+                                    class="btn btn-link text-muted" 
+                                    type="button"
+                                    t-on-click="openFileManager"
+                                >
+                                    <i class="fa fa-paperclip fs-5"></i>
+                                </button>
+                                <textarea 
+                                    class="form-control border-0 bg-white rounded-pill"
+                                    placeholder="Type a message..." 
+                                    rows="1"
+                                    t-model="state.newMessage"
+                                    t-on-keydown="handleKeyDown"
+                                ></textarea>
+                                <!-- Send button -->
+                                <button 
+                                    t-if="state.newMessage.trim() || state.attachment"
+                                    class="btn btn-link text-success" 
+                                    t-on-click="sendMessage"
+                                >
+                                    <i class="fa fa-paper-plane fs-5"></i>
+                                </button>
+                                <!-- Microphone button for audio recording -->
+                                <button 
+                                    t-if="!state.newMessage.trim() &amp;&amp; !state.attachment"
+                                    class="btn btn-link text-success" 
+                                    t-on-click="startAudioRecording"
+                                >
+                                    <i class="fa fa-microphone fs-5"></i>
+                                </button>
+                            </div>
+                        </t>
                     </div>
                 </t>
             </div>
