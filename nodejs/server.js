@@ -93,41 +93,30 @@ app.post("/send-media", async (req, res) => {
             return errorResponse(res, new Error("Chat ID and media URL are required"), 400);
         }
 
-        if (!client || !client.info || !client.ready) {
+        if (!client.info) {
             return errorResponse(res, new Error("WhatsApp client not authenticated"), 403);
         }
 
         console.log(`Sending media to ${chatId} from URL: ${mediaUrl}`);
 
+        // Create a MessageMedia object using the URL
         const { MessageMedia } = require('whatsapp-web.js');
         let media;
-
+        
+        // If it's a local URL from our uploads directory
         if (mediaUrl.includes('/uploads/')) {
             const filePath = path.join(uploadDir, path.basename(mediaUrl));
-            console.log("Resolved file path:", filePath);
-
-            if (!fs.existsSync(filePath)) {
-                console.error("File not found:", filePath);
-                return errorResponse(res, new Error("File not found"), 404);
-            }
-
             media = MessageMedia.fromFilePath(filePath);
-        } else {
-            try {
-                media = await MessageMedia.fromUrl(mediaUrl);
-                if (!media) throw new Error("Failed to fetch media from URL");
-            } catch (fetchError) {
-                console.error("Failed to fetch media:", fetchError);
-                return errorResponse(res, new Error("Could not download media from URL"), 500);
+            // Set filename if provided
+            if (fileName) {
+                media.filename = fileName;
             }
+        } else {
+            // External URL
+            media = await MessageMedia.fromUrl(mediaUrl);
         }
 
-        if (!media.mimetype) {
-            media.mimetype = "application/octet-stream";
-        }
-
-        console.log("Detected MIME Type:", media.mimetype);
-
+        // Send the media
         const sentMessage = await client.sendMessage(chatId, media, { 
             caption: message,
             sendMediaAsDocument: media.mimetype.startsWith('application/')
@@ -137,10 +126,9 @@ app.post("/send-media", async (req, res) => {
             messageId: sentMessage.id._serialized,
             timestamp: sentMessage.timestamp
         }, "Media sent successfully");
-
     } catch (error) {
         console.error("Error sending media:", error);
-        return errorResponse(res, new Error(error.message || "Unknown error occurred"), 500);
+        return errorResponse(res, error);
     }
 });
 
