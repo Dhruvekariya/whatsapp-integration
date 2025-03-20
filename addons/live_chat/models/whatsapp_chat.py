@@ -1,3 +1,8 @@
+import base64
+import json
+import os
+import tempfile
+import requests
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 import logging
