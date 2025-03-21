@@ -192,3 +192,39 @@ body {
     max-width: 80%;
   }
 }
+/* Add these styles to your CSS file */
+
+.emoji-picker-container {
+  transition: all 0.2s ease;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.emoji-btn:hover {
+  background-color: #f0f0f0;
+  transform: scale(1.1);
+  transition: all 0.2s ease;
+}
+
+.emoji-category-tabs {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: thin;
+}
+
+.emoji-category-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.emoji-category-tabs::-webkit-scrollbar-thumb {
+  background-color: #ddd;
+  border-radius: 2px;
+}
+
+.emoji-grid::-webkit-scrollbar {
+  width: 5px;
+}
+
+.emoji-grid::-webkit-scrollbar-thumb {
+  background-color: #ddd;
+  border-radius: 2px;
+}

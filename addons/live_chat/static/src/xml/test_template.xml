@@ -238,9 +238,37 @@
                         <t t-if="!state.isRecording">
                             <div class="input-group">
                                 <!-- Emoji button -->
-                                <button class="btn btn-link text-muted" t-on-click="toggleEmojiPicker">
+                                <button class="btn btn-link text-muted position-relative" t-on-click="toggleEmojiPicker">
                                     <i class="fa fa-smile-o fs-5"></i>
                                 </button>
+                        <!-- Emoji picker panel (only visible when emojiPickerOpen is true) -->
+                        <div t-if="state.emojiPickerOpen" class="emoji-picker-container position-absolute bottom-100 start-0 mb-2 bg-white rounded shadow-lg p-2 border" style="width: 320px; height: 300px; z-index: 1000;">
+                            <!-- Emoji picker header with scrollable category tabs -->
+                            <div class="emoji-category-tabs d-flex overflow-auto pb-2 mb-2 border-bottom" style="white-space: nowrap;">
+                                <t t-foreach="state.emojiCategories" t-as="category" t-key="category_index">
+                                    <button 
+                                        t-on-click="() => this.changeEmojiCategory(category_index)"
+                                        class="btn btn-sm me-1 flex-shrink-0" 
+                                        t-attf-class="{{ state.currentEmojiCategory === category_index ? 'btn-primary' : 'btn-light' }}">
+                                        <t t-esc="category.name.split(' ')[0]"/>
+                                    </button>
+                                </t>
+                            </div>
+                            
+                            <!-- Emoji grid -->
+                            <div class="emoji-grid overflow-auto" style="height: 230px;">
+                                <div class="d-flex flex-wrap">
+                                    <t t-foreach="state.emojiCategories[state.currentEmojiCategory].emojis" t-as="emoji" t-key="emoji_index">
+                                        <button
+                                            t-on-click="() => this.insertEmoji(emoji)"
+                                            class="btn btn-sm btn-light emoji-btn p-1 m-1"
+                                            style="min-width: 36px; min-height: 36px; font-size: 20px;">
+                                            <t t-esc="emoji"/>
+                                        </button>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
                                 <!-- Hidden file input -->
                                 <input 
                                     type="file" 
@@ -257,16 +285,18 @@
                                     <i class="fa fa-paperclip fs-5"></i>
                                 </button>
                                 <textarea 
-                                    class="form-control border-0 bg-white rounded-pill"
-                                    placeholder="Type a message..." 
+                                    t-ref="messageInput"
+                                    class="form-control bg-light border-0"
+                                    placeholder="Type a message" 
                                     rows="1"
                                     t-model="state.newMessage"
                                     t-on-keydown="handleKeyDown"
+                                    style="resize: none;"
                                 ></textarea>
                                 <!-- Send button -->
                                 <button 
                                     t-if="state.newMessage.trim() || state.attachment"
-                                    class="btn btn-link text-success" 
+                                    class="btn btn-link text-primary" 
                                     t-on-click="sendMessage"
                                 >
                                     <i class="fa fa-paper-plane fs-5"></i>
@@ -274,7 +304,7 @@
                                 <!-- Microphone button for audio recording -->
                                 <button 
                                     t-if="!state.newMessage.trim() &amp;&amp; !state.attachment"
-                                    class="btn btn-link text-success" 
+                                    class="btn btn-link text-muted" 
                                     t-on-click="startAudioRecording"
                                 >
                                     <i class="fa fa-microphone fs-5"></i>
