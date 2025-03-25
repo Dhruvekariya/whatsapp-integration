@@ -371,9 +371,9 @@ app.get("/get-chats", async (_req, res) => {
 
         console.log("Attempting to get chats...");
 
-        // Use a timeout to avoid hanging the request
+        // Increased timeout for more complex operations
         const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Operation timed out")), 5000)
+            setTimeout(() => reject(new Error("Operation timed out")), 15000) // 15 seconds
         );
 
         // Get chats with a timeout
@@ -381,9 +381,6 @@ app.get("/get-chats", async (_req, res) => {
         let chats = await Promise.race([chatsPromise, timeoutPromise]);
 
         console.log(`Retrieved ${chats.length} chats`);
-
-        console.log(`First Chat`, JSON.stringify(chats[0], null, 2));
-
 
         // Simplify the response to reduce processing time
         let formattedChats = await Promise.all(chats.map(async (chat) => ({
@@ -397,27 +394,53 @@ app.get("/get-chats", async (_req, res) => {
             profilePicUrl: ""
         })));
 
-        // Fetch profile pictures with timeout (limit to 10)
+        // Fetch profile pictures with improved efficiency
         const fetchProfilePic = async (chat) => {
             try {
+                // Use Promise.race with a shorter timeout for each profile pic fetch
                 const profilePicPromise = client.getProfilePicUrl(chat.id);
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error("Profile pic fetch timeout")), 2500) // Slightly longer timeout
+                );
+
                 chat.profilePicUrl = await Promise.race([
                     profilePicPromise,
-                    new Promise((_, reject) => setTimeout(() => reject(new Error("Profile pic fetch timeout")), 3000))
+                    timeoutPromise
                 ]);
             } catch (error) {
                 chat.profilePicUrl = "";
+                console.warn(`Failed to fetch profile pic for chat ${chat.id}:`, error.message);
             }
+            return chat;
         };
 
-        await Promise.all(formattedChats.slice(0, 10).map(fetchProfilePic));
+        // Concurrency set to 10 with more robust error handling
+        const CONCURRENCY_LIMIT = 10;
+        const results = [];
 
-        console.log(`First Chat`, JSON.stringify(formattedChats[0], null, 2));
+        for (let i = 0; i < formattedChats.length; i += CONCURRENCY_LIMIT) {
+            const batch = formattedChats.slice(i, i + CONCURRENCY_LIMIT);
+            
+            // Process batch with all-settle to continue even if some promises fail
+            const batchResults = await Promise.allSettled(batch.map(fetchProfilePic));
+            
+            // Add successfully processed chats to results
+            batchResults.forEach((result, index) => {
+                if (result.status === 'fulfilled') {
+                    results.push(result.value);
+                } else {
+                    // Log failed chats but continue processing
+                    console.error(`Failed to process chat at index ${i + index}:`, result.reason);
+                    results.push(batch[index]); // Add original chat even if pic fetch failed
+                }
+            });
 
+            console.log(`Processed batch ${Math.floor(i/CONCURRENCY_LIMIT) + 1}, Total processed: ${results.length}`);
+        }
 
         return successResponse(res, {
-            chats: formattedChats,
-            totalCount: formattedChats.length
+            chats: results,
+            totalCount: results.length
         });
     } catch (error) {
         console.error("Error in get-chats endpoint:", error);
