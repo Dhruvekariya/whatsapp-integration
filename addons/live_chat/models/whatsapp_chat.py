@@ -23,13 +23,14 @@ class WhatsAppChat(models.Model):
     active = fields.Boolean('Active', default=True)
     partner_id = fields.Many2one('res.partner', string='Related Partner')
     message_ids = fields.One2many('live_chat.whatsapp.message', 'chat_id', string='Messages')
+    profilePicUrl = fields.Char('Profile Picture URL')
     
     @api.model
     def refresh_chats(self):
         """Refresh chats from WhatsApp API"""
         # This is where you would implement WhatsApp API integration
         # For demo purposes, we'll just return existing chats
-        return self.search([]).read(['id', 'name', 'phone', 'last_message', 'unread', 'active'])
+        return self.search([]).read(['id', 'name', 'phone', 'last_message', 'unread', 'active', "profilePicUrl"])
     
     def mark_as_read(self):
         """Mark all messages in the chat as read"""

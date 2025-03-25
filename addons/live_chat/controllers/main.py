@@ -61,6 +61,8 @@ class WhatsAppController(http.Controller):
                     last_message = chat.get("lastMessage", {}).get("_data", {}).get("body", "No message")
                     phone_number = chat.get("phone_number", "No number")
                     chat_id = chat.get("chat_id", "No id")
+                    # adding profile picture
+                    profilePicUrl = chat.get("profilePicUrl", "")
 
                     # Create new chat record
                     chat_record = request.env["live_chat.whatsapp.chat"].sudo().create({
@@ -68,7 +70,8 @@ class WhatsAppController(http.Controller):
                         "unread": unread_count,
                         "last_message": last_message,
                         "phone" : phone_number,
-                        "chat_id" : chat_id
+                        "chat_id" : chat_id,
+                        "profilePicUrl" : profilePicUrl
                     })
                     chat_records.append(chat_record)
 
@@ -95,7 +98,7 @@ class WhatsAppController(http.Controller):
         Chat = request.env['live_chat.whatsapp.chat'].sudo()
         chats = Chat.search([])
         _logger.info("Id of first chat %s",chats[0].chat_id)
-        return chats.read(['id', 'name', 'phone', 'last_message', 'unread', 'active', "chat_id"])
+        return chats.read(['id', 'name', 'phone', 'last_message', 'unread', 'active', "chat_id","profilePicUrl"])
   
     @http.route('/live_chat/whatsapp/messages/<int:chat_id>', type='json', auth='user')
     def get_whatsapp_messages(self, chat_id):

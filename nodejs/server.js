@@ -36,7 +36,7 @@ const client = new Client({
 });
 // Create uploads directory if it doesn't exist
 const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)){
+if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
@@ -53,7 +53,7 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ 
+const upload = multer({
     storage: storage,
     limits: {
         fileSize: 10 * 1024 * 1024, // 10MB limit
@@ -71,7 +71,7 @@ app.post('/upload-file', upload.single('file'), (req, res) => {
         }
 
         const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-        
+
         return successResponse(res, {
             filename: req.file.filename,
             originalname: req.file.originalname,
@@ -102,7 +102,7 @@ app.post("/send-media", async (req, res) => {
         // Create a MessageMedia object using the URL
         const { MessageMedia } = require('whatsapp-web.js');
         let media;
-        
+
         // If it's a local URL from our uploads directory
         if (mediaUrl.includes('/uploads/')) {
             const filePath = path.join(uploadDir, path.basename(mediaUrl));
@@ -117,7 +117,7 @@ app.post("/send-media", async (req, res) => {
         }
 
         // Send the media
-        const sentMessage = await client.sendMessage(chatId, media, { 
+        const sentMessage = await client.sendMessage(chatId, media, {
             caption: message,
             sendMediaAsDocument: media.mimetype.startsWith('application/')
         });
@@ -147,7 +147,7 @@ wss.on('connection', (ws) => {
             else if (data.type === 'sendFile') {
                 const { MessageMedia } = require('whatsapp-web.js');
                 let media;
-                
+
                 if (data.fileData) {
                     // Base64 encoded file data
                     media = new MessageMedia(data.mimeType, data.fileData, data.fileName);
@@ -163,20 +163,20 @@ wss.on('connection', (ws) => {
                         media.filename = data.fileName;
                     }
                 }
-                
+
                 const sentMessage = await client.sendMessage(
-                    data.chatId, 
-                    media, 
-                    { 
+                    data.chatId,
+                    media,
+                    {
                         caption: data.caption || '',
                         sendMediaAsDocument: media.mimetype.startsWith('application/')
                     }
                 );
-                
-                ws.send(JSON.stringify({ 
-                    type: 'fileSent', 
-                    messageId: sentMessage.id._serialized, 
-                    timestamp: sentMessage.timestamp 
+
+                ws.send(JSON.stringify({
+                    type: 'fileSent',
+                    messageId: sentMessage.id._serialized,
+                    timestamp: sentMessage.timestamp
                 }));
             }
         } catch (error) {
@@ -378,24 +378,42 @@ app.get("/get-chats", async (_req, res) => {
 
         // Get chats with a timeout
         const chatsPromise = client.getChats();
-        const chats = await Promise.race([chatsPromise, timeoutPromise]);
+        let chats = await Promise.race([chatsPromise, timeoutPromise]);
 
         console.log(`Retrieved ${chats.length} chats`);
 
         console.log(`First Chat`, JSON.stringify(chats[0], null, 2));
 
 
-
         // Simplify the response to reduce processing time
-        const formattedChats = chats.map(chat => ({
+        let formattedChats = await Promise.all(chats.map(async (chat) => ({
             ...chat,
             id: chat.id._serialized,
             chat_id: chat.id._serialized,
             phone_number: chat.id.user,
             name: chat.name || chat.id._serialized,
             isGroup: chat.isGroup || false,
-            unreadCount: chat.unreadCount || 0
-        }));
+            unreadCount: chat.unreadCount || 0,
+            profilePicUrl: ""
+        })));
+
+        // Fetch profile pictures with timeout (limit to 10)
+        const fetchProfilePic = async (chat) => {
+            try {
+                const profilePicPromise = client.getProfilePicUrl(chat.id);
+                chat.profilePicUrl = await Promise.race([
+                    profilePicPromise,
+                    new Promise((_, reject) => setTimeout(() => reject(new Error("Profile pic fetch timeout")), 3000))
+                ]);
+            } catch (error) {
+                chat.profilePicUrl = "";
+            }
+        };
+
+        await Promise.all(formattedChats.slice(0, 10).map(fetchProfilePic));
+
+        console.log(`First Chat`, JSON.stringify(formattedChats[0], null, 2));
+
 
         return successResponse(res, {
             chats: formattedChats,
@@ -443,7 +461,7 @@ app.get("/get-messages/:chatId", async (req, res) => {
 
         console.log(`Retrieving messages for chat: ${chatId}`);
         const chat = await client.getChatById(chatId);
-        const messages = await chat.fetchMessages({ limit, type:"chat" });
+        const messages = await chat.fetchMessages({ limit, type: "chat" });
 
         console.log(`Retrieved ${messages.length} messages`);
 
@@ -455,7 +473,7 @@ app.get("/get-messages/:chatId", async (req, res) => {
                     const media = await msg.downloadMedia();
                     if (media) {
                         mediaBase64 = `data:${media.mimetype};base64,${media.data}`;
-                        
+
                     }
                 }
 
@@ -537,4 +555,3 @@ app.post('/logout', async (_req, res) => {
 server.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
- 
