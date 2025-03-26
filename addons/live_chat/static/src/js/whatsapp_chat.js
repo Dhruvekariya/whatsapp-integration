@@ -513,13 +513,7 @@ class WhatsAppChat extends Component {
         }
     }
 
-    handleKeyDown(event) {
-        // Send message on Enter (but not with Shift+Enter for new line)
-        if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault();
-            this.sendMessage();
-        }
-    }
+
 
     // Enhanced file attachment methods
     openFileManager() {
@@ -654,25 +648,27 @@ async sendMessage() {
         text: messageText,
         sender: 'me',
         time: currentTime,
-        sending: true,
-        failed: false,
         hasAttachment: hasAttachment,
         attachmentName: hasAttachment ? this.state.attachment.name : null,
         attachmentUrl: this.state.attachmentPreview, // Use preview for temporary display
         attachmentType: hasAttachment ? this.state.attachment.mediaType : null,
-        attachmentMimeType: hasAttachment ? this.state.attachment.type : null
+        attachmentMimeType: hasAttachment ? this.state.attachment.type : null,
+        delivered: false  // Use this for tracking instead of 'sending' 
     };
 
     // Add to messages
+
     if (!this.state.messages[this.state.activeChat.id]) {
         this.state.messages[this.state.activeChat.id] = [];
     }
     this.state.messages[this.state.activeChat.id].push(tempMessage);
 
-    // Force update messages to trigger UI refresh
+    // Reactive update 
     this.state.messages = { ...this.state.messages };
+     // Clear input
+     this.state.newMessage = "";
 
-    // Scroll to bottom
+    // Scroll to bottom smoothly
     setTimeout(() => this.scrollToBottom(), 100);
 
     try {
@@ -785,78 +781,67 @@ async sendMessage() {
             });
             
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Server responded with ${response.status}: ${errorText}`);
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
             
             result = await response.json();
         }
 
-        if (result.success) {
-            // Update temporary message with real message data from server response
-            const messageIndex = this.state.messages[this.state.activeChat.id]
-                .findIndex(m => m.id === tempMessage.id);
+        
+        // Update message status in real-time
+        const chatMessages = this.state.messages[this.state.activeChat.id];
+        const messageIndex = chatMessages.findIndex(m => m.id === tempMessage.id);
+        if (result && result.success) {
+            const chatMessages = this.state.messages[this.state.activeChat.id];
+            const messageIndex = chatMessages.findIndex(m => m.id === tempMessage.id);
 
             if (messageIndex >= 0) {
-                // Use server timestamp if available, otherwise keep the original time
-                const messageTime = result.data?.timestamp 
-                    ? new Date(result.data.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
-                    : tempMessage.time;
-                    
-                this.state.messages[this.state.activeChat.id][messageIndex] = {
-                    ...tempMessage,
+                const updatedMessages = [...chatMessages];
+                chatMessages[messageIndex] = {
+                    ...chatMessages[messageIndex],
                     id: result.data?.id || tempMessage.id,
-                    text: messageText,
-                    time: messageTime,
-                    sending: false,
-                    failed: false,
-                    attachmentUrl: result.data?.mediaUrl || tempMessage.attachmentUrl
+                    serverMessageId: result.data?.id,
                 };
                 
-                // Force update messages to trigger UI refresh
-                this.state.messages = { ...this.state.messages };
+                // Update state with the new messages array
+                this.state.messages[this.state.activeChat.id] = updatedMessages;
+                this.state.messages = { ...this.state.messages };   
+
+                // Clear attachment state
+                this.resetAttachmentState();
             }
-
-            // Clear attachment state
-            this.state.attachment = null;
-            this.state.attachmentPreview = null;
-            if (this.fileInputRef.el) {
-                this.fileInputRef.el.value = null;
-            }
-
-            // Refresh chat list to update last messages
-            this.refreshChats();
-        } else {
-            // Mark as failed
-            const messageIndex = this.state.messages[this.state.activeChat.id]
-                .findIndex(m => m.id === tempMessage.id);
-
-            if (messageIndex >= 0) {
-                this.state.messages[this.state.activeChat.id][messageIndex].sending = false;
-                this.state.messages[this.state.activeChat.id][messageIndex].failed = true;
-                
-                // Force update messages to trigger UI refresh
-                this.state.messages = { ...this.state.messages };
-            }
-
-            console.error("Failed to send message:", result.error);
+          } else {
+            this.handleMessageSendFailure(tempMessage);
         }
     } catch (error) {
-        console.error("Error sending message:", error);
-
-        // Mark as failed
-        const messageIndex = this.state.messages[this.state.activeChat.id]
-            .findIndex(m => m.id === tempMessage.id);
-
+        console.error("Message send error:", error);
+        // Optionally remove the message or mark as failed
+        const chatMessages = this.state.messages[this.state.activeChat.id];
+        const messageIndex = chatMessages.findIndex(m => m.id === newMessage.id);
+        
         if (messageIndex >= 0) {
-            this.state.messages[this.state.activeChat.id][messageIndex].sending = false;
-            this.state.messages[this.state.activeChat.id][messageIndex].failed = true;
-            
-            // Force update messages to trigger UI refresh
+            chatMessages.splice(messageIndex, 1);
+            this.state.messages[this.state.activeChat.id] = chatMessages;
             this.state.messages = { ...this.state.messages };
         }
     }
 }
+    
+
+// Simplified reset method
+resetAttachmentState() {
+    this.state.attachment = null;
+    this.state.attachmentPreview = null;
+    
+    // Reset file input if exists
+    if (this.fileInputRef && this.fileInputRef.current) {
+        this.fileInputRef.current.value = null;
+    }
 }
+}
+// Helper method to handle message send failure
+// Updated failure handler with more robust error management
+// Simplified failure handler
+
 WhatsAppChat.template = "live_chat.WhatsAppChat";
 registry.category("actions").add("live_chat.dashboard", WhatsAppChat);

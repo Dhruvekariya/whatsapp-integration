@@ -400,7 +400,7 @@ app.get("/get-chats", async (_req, res) => {
                 // Use Promise.race with a shorter timeout for each profile pic fetch
                 const profilePicPromise = client.getProfilePicUrl(chat.id);
                 const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error("Profile pic fetch timeout")), 2500) // Slightly longer timeout
+                    setTimeout(() => reject(new Error("Profile pic fetch timeout")), 3000) // Slightly longer timeout
                 );
 
                 chat.profilePicUrl = await Promise.race([

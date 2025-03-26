@@ -9,7 +9,7 @@
                         <h5 class="m-0">Chats</h5>
                         <div class="ms-auto">
                             <button class="btn btn-link p-1" t-on-click="refreshChats">
-                                <i class="fa fa-pencil-square-o fs-5"></i>
+                                <i class="fa fa-refresh fs-5" style="cursor: pointer;"></i>
                             </button>
                             <button class="btn btn-link p-1">
                                 <i class="fa fa-ellipsis-v fs-5"></i>
