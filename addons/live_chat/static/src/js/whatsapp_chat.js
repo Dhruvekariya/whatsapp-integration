@@ -485,6 +485,7 @@ class WhatsAppChat extends Component {
                     return {
                         text: msg?.body,
                         sender: msg?.fromMe ? "me" : "them",
+                        senderName: msg?.senderName || (msg?.fromMe ? "Me" : "Contact"), 
                         time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
                         sending: msg?.status === 'sending',
                         failed: msg?.status === 'failed',

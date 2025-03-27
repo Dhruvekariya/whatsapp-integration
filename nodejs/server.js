@@ -491,7 +491,16 @@ app.get("/get-messages/:chatId", async (req, res) => {
         const formattedMessages = await Promise.all(
             messages.map(async (msg) => {
                 let mediaBase64 = null;
+                let senderName = "";
 
+                 // Determine sender name
+                if (msg.fromMe) {
+                    senderName = "Me"; // Your own messages
+                } else {
+                    // For incoming messages, use the contact's name
+                    const contact = await msg.getContact();
+                    senderName = contact.name || contact.pushname || contact.id.user;
+                }
                 if (msg.hasMedia) {
                     const media = await msg.downloadMedia();
                     if (media) {
@@ -509,6 +518,7 @@ app.get("/get-messages/:chatId", async (req, res) => {
                     hasMedia: msg.hasMedia,
                     mediaBase64: mediaBase64,
                     author: msg.author || null,
+                    senderName: senderName, // Add sender name to the response
                 };
             })
         );

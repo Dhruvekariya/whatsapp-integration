@@ -32,55 +32,61 @@
                     </div>
                 </div>
                 
-                <div t-if="state.loading" class="d-flex justify-content-center p-5">
-                    <div class="spinner-border text-success" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                <t t-if="state.loading">
+                    <div class="d-flex justify-content-center p-5">
+                        <div class="spinner-border text-success" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
                     </div>
-                </div>
+                </t>
                 
-                <div t-if="!state.loading and state.filteredChats.length === 0" class="p-3 text-center text-muted">
-                    No chats available
-                </div>
+                <t t-if="!state.loading and state.filteredChats.length === 0">
+                    <div class="p-3 text-center text-muted">
+                        No chats available
+                    </div>
+                </t>
                 
-                <div t-if="!state.loading" class="chat-list overflow-auto" style="height: calc(100vh - 125px); background-color: #ffffff;">
-                    <t t-foreach="state.filteredChats" t-as="chat" t-key="chat.id">
-                        <div 
-                            class="chat-item p-2 d-flex align-items-center"
-                            t-att-class="{'active-chat bg-light': chat.isActive}"
-                            t-on-click="() => this.selectChat(chat)"
-                        >
-                            <div class="avatar me-3">
-                                <t t-if="chat.profilePicUrl">
-                                    <img t-att-src="chat.profilePicUrl" alt="Profile" class="rounded-circle" width="50" height="50"/>
-                                </t>
-                                <t t-else="">
-                                    <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 50px; height: 50px; background-color: #128C7E;">
-                                        <t t-esc="chat.name.charAt(0).toUpperCase()"/>
-                                    </div>
-                                </t>
-                            </div>
-                            <div class="flex-grow-1 border-bottom pb-2">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <strong class="chat-name"><t t-esc="chat.name"/></strong>
-                                    <small class="text-muted chat-time"><t t-esc="chat.time || '18:30'"/></small>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="text-muted text-truncate chat-preview">
-                                        <t t-if="chat.sender">
-                                            <span class="me-1"><t t-esc="chat.sender"/>:</span>
-                                        </t>
-                                        <t t-esc="chat.last_message"/>
-                                    </div>
-                                    <t t-if="chat.unread">
-                                        <span class="badge rounded-pill bg-success ms-2">
-                                            <t t-esc="chat.unread"/>
-                                        </span>
+                <t t-if="!state.loading">
+                    <div class="chat-list overflow-auto" style="height: calc(100vh - 125px); background-color: #ffffff;">
+                        <t t-foreach="state.filteredChats" t-as="chat" t-key="chat.id">
+                            <div 
+                                class="chat-item p-2 d-flex align-items-center"
+                                t-att-class="{'active-chat bg-light': chat.isActive}"
+                                t-on-click="() => this.selectChat(chat)"
+                            >
+                                <div class="avatar me-3">
+                                    <t t-if="chat.profilePicUrl">
+                                        <img t-att-src="chat.profilePicUrl" alt="Profile" class="rounded-circle" width="50" height="50"/>
+                                    </t>
+                                    <t t-else="">
+                                        <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 50px; height: 50px; background-color: #128C7E;">
+                                            <t t-esc="chat.name.charAt(0).toUpperCase()"/>
+                                        </div>
                                     </t>
                                 </div>
+                                <div class="flex-grow-1 border-bottom pb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <strong class="chat-name"><t t-esc="chat.name"/></strong>
+                                        <small class="text-muted chat-time"><t t-esc="chat.time || '18:30'"/></small>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="text-muted text-truncate chat-preview">
+                                            <t t-if="chat.sender">
+                                                <span class="me-1"><t t-esc="chat.sender"/>:</span>
+                                            </t>
+                                            <t t-esc="chat.last_message"/>
+                                        </div>
+                                        <t t-if="chat.unread">
+                                            <span class="badge rounded-pill bg-success ms-2">
+                                                <t t-esc="chat.unread"/>
+                                            </span>
+                                        </t>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </t>
-                </div>
+                        </t>
+                    </div>
+                </t>
             </div>
             
             <!-- Chat content area -->
@@ -126,75 +132,84 @@
                         </div>
                     </div>
                     
-                    <!-- Messages area with light patterned background -->
+                    <!-- Messages area -->
                     <div class="messages-container flex-grow-1 p-3 overflow-auto" 
                         t-ref="messageList"
                         style="background-color: #ffffff;">
                         <t t-if="state.messages[state.activeChat.id]">
-                            <t t-foreach="state.messages[state.activeChat.id]" t-as="message" t-key="message.id">
-                                <div class="message-wrapper d-flex mb-2"
-                                     t-att-class="message.sender === 'me' ? 'justify-content-end' : 'justify-content-start'">
-                                    <div class="message-bubble p-2 rounded shadow-sm"
-                                         t-att-class="message.sender === 'me' ? 'bg-light-green' : 'bg-white'"
-                                         style="max-width: 75%; border-radius: 7.5px; position: relative;">
-                                        <div class="message-text"><t t-esc="message.text"/></div>
-                                        <!-- Display attachment if present -->
-                                        <t t-if="message.hasAttachment">
-                                            <div class="message-attachment mt-1">
-                                                <t t-if="message.attachmentType == 'image'">
-                                                    <img t-att-src="message.attachmentUrl" 
-                                                        class="img-fluid rounded mt-2" 
-                                                        alt="Image Attachment" 
-                                                        style="max-width: 200px;">
-                                                    </img>
-                                                </t>
+                           <t t-foreach="state.messages[state.activeChat.id]" t-as="message" t-key="message.id">
+                            <div class="message-wrapper d-flex mb-2"
+                                t-att-class="message.sender === 'me' ? 'justify-content-end' : 'justify-content-start'">
+                                <div class="message-bubble p-2 rounded shadow-sm"
+                                    t-att-class="message.sender === 'me' ? 'bg-light-green' : 'bg-white'"
+                                    style="max-width: 75%; border-radius: 7.5px; position: relative;">
+                                    <t t-if="message.sender === 'them'">
+                                        <div 
+                                            class="message-sender mb-1" 
+                                            t-att-style="'font-size: 0.8em; color: ' + (message.senderColor || 'inherit')"
+                                        >
+                                            <t t-esc="message.senderName"/>
+                                        </div>
+                                    </t>
+                                    <div class="message-text"><t t-esc="message.text"/></div>
+                                    
+                                    <!-- Attachment handling -->
+                                    <t t-if="message.hasAttachment">
+                                        <div class="message-attachment mt-1">
+                                            <t t-if="message.attachmentType == 'image'">
+                                                <img t-att-src="message.attachmentUrl" 
+                                                    class="img-fluid rounded mt-2" 
+                                                    alt="Image Attachment" 
+                                                    style="max-width: 200px;"/>
+                                            </t>
 
-                                                <t t-elif="message.attachmentType == 'video'">
-                                                    <video class="w-100 mt-2" style="max-width: 300px;" t-att-controls="'controls'">
-                                                        <source t-att-src="message.attachmentUrl" t-att-type="'video/mp4'"></source>
-                                                        Your browser does not support the video tag.
-                                                    </video>
-                                                </t>
-                                                <t t-elif="message.attachmentType == 'audio' or message.attachmentType == 'ptt'">
-                                                    <audio t-att-controls="'true'" class="mt-2">
-                                                        <source t-att-src="message.attachmentUrl" type="audio/ogg"></source>
-                                                        Your browser does not support the audio element.
-                                                    </audio>
-                                                </t>
+                                            <t t-elif="message.attachmentType == 'video'">
+                                                <video class="w-100 mt-2" style="max-width: 300px;" controls="controls">
+                                                    <source t-att-src="message.attachmentUrl" t-att-type="'video/mp4'"/>
+                                                    Your browser does not support the video tag.
+                                                </video>
+                                            </t>
+                                            <t t-elif="message.attachmentType == 'audio' or message.attachmentType == 'ptt'">
+                                                <audio controls="true" class="mt-2">
+                                                    <source t-att-src="message.attachmentUrl" type="audio/ogg"/>
+                                                    Your browser does not support the audio element.
+                                                </audio>
+                                            </t>
 
-                                                <t t-elif="message.attachmentType == 'document'">
-                                                    <div class="document-attachment p-2 bg-light rounded mt-2 d-flex align-items-center">
-                                                        <i class="fa fa-file me-2 text-primary"></i>
-                                                        <div class="flex-grow-1 text-truncate">
-                                                            <t t-esc="message.attachmentName"/>
-                                                        </div>
-                                                        <a t-att-href="message.attachmentUrl" 
-                                                        download="document" 
-                                                        class="ms-2 text-decoration-none">
-                                                            <i class="fa fa-download"></i>
-                                                        </a>
+                                            <t t-elif="message.attachmentType == 'document'">
+                                                <div class="document-attachment p-2 bg-light rounded mt-2 d-flex align-items-center">
+                                                    <i class="fa fa-file me-2 text-primary"></i>
+                                                    <div class="flex-grow-1 text-truncate">
+                                                        <t t-esc="message.attachmentName"/>
                                                     </div>
-                                                </t>
-                                            </div>
-                                        </t>
-                                        <div class="message-time small text-muted text-end">
-                                            <small><t t-esc="message.time"/></small>
-                                            <t t-if="message.sending">
-                                                <i class="fa fa-clock-o ms-1"/>
-                                            </t>
-                                            <t t-elif="message.delivered">
-                                                <i class="fa fa-check ms-1"/>
-                                            </t>
-                                            <t t-elif="message.read">
-                                                <i class="fa fa-check-double text-primary ms-1"/>
-                                            </t>
-                                            <t t-elif="message.failed">
-                                                <i class="fa fa-exclamation-circle text-danger ms-1"/>
+                                                    <a t-att-href="message.attachmentUrl" 
+                                                    download="document" 
+                                                    class="ms-2 text-decoration-none">
+                                                        <i class="fa fa-download"></i>
+                                                    </a>
+                                                </div>
                                             </t>
                                         </div>
+                                    </t>
+                                    
+                                    <div class="message-time small text-muted text-end">
+                                        <small><t t-esc="message.time"/></small>
+                                        <t t-if="message.sending">
+                                            <i class="fa fa-clock-o ms-1"/>
+                                        </t>
+                                        <t t-elif="message.delivered">
+                                            <i class="fa fa-check ms-1"/>
+                                        </t>
+                                        <t t-elif="message.read">
+                                            <i class="fa fa-check-double text-primary ms-1"/>
+                                        </t>
+                                        <t t-elif="message.failed">
+                                            <i class="fa fa-exclamation-circle text-danger ms-1"/>
+                                        </t>
                                     </div>
                                 </div>
-                            </t>
+                            </div>
+                           </t>
                         </t>
                     </div>
                     
@@ -219,20 +234,22 @@
                         </t>
                         
                         <!-- File attachment preview -->
-                        <div t-if="state.attachment" class="attachment-preview mb-2 p-2 bg-white rounded d-flex align-items-center">
-                            <t t-if="state.attachment.mediaType === 'audio'">
-                                <i class="fa fa-microphone me-2"></i>
-                            </t>
-                            <t t-else="">
-                                <i class="fa fa-file me-2"></i>
-                            </t>
-                            <div class="flex-grow-1 text-truncate">
-                                <t t-esc="state.attachment.name"/>
+                        <t t-if="state.attachment">
+                            <div class="attachment-preview mb-2 p-2 bg-white rounded d-flex align-items-center">
+                                <t t-if="state.attachment.mediaType === 'audio'">
+                                    <i class="fa fa-microphone me-2"></i>
+                                </t>
+                                <t t-else="">
+                                    <i class="fa fa-file me-2"></i>
+                                </t>
+                                <div class="flex-grow-1 text-truncate">
+                                    <t t-esc="state.attachment.name"/>
+                                </div>
+                                <button class="btn btn-sm btn-link text-danger" t-on-click="removeAttachment">
+                                    <i class="fa fa-times"></i>
+                                </button>
                             </div>
-                            <button class="btn btn-sm btn-link text-danger" t-on-click="removeAttachment">
-                                <i class="fa fa-times"></i>
-                            </button>
-                        </div>
+                        </t>
                         
                         <!-- Normal input area (only show when not recording) -->
                         <t t-if="!state.isRecording">
@@ -241,34 +258,38 @@
                                 <button class="btn btn-link text-muted position-relative" t-on-click="toggleEmojiPicker">
                                     <i class="fa fa-smile-o fs-5"></i>
                                 </button>
-                        <!-- Emoji picker panel (only visible when emojiPickerOpen is true) -->
-                        <div t-if="state.emojiPickerOpen" class="emoji-picker-container position-absolute bottom-100 start-0 mb-2 bg-white rounded shadow-lg p-2 border" style="width: 320px; height: 300px; z-index: 1000;">
-                            <!-- Emoji picker header with scrollable category tabs -->
-                            <div class="emoji-category-tabs d-flex overflow-auto pb-2 mb-2 border-bottom" style="white-space: nowrap;">
-                                <t t-foreach="state.emojiCategories" t-as="category" t-key="category_index">
-                                    <button 
-                                        t-on-click="() => this.changeEmojiCategory(category_index)"
-                                        class="btn btn-sm me-1 flex-shrink-0" 
-                                        t-attf-class="{{ state.currentEmojiCategory === category_index ? 'btn-primary' : 'btn-light' }}">
-                                        <t t-esc="category.name.split(' ')[0]"/>
-                                    </button>
+                                
+                                <!-- Emoji picker panel -->
+                                <t t-if="state.emojiPickerOpen">
+                                    <div class="emoji-picker-container position-absolute bottom-100 start-0 mb-2 bg-white rounded shadow-lg p-2 border" style="width: 320px; height: 300px; z-index: 1000;">
+                                        <!-- Emoji category tabs -->
+                                        <div class="emoji-category-tabs d-flex overflow-auto pb-2 mb-2 border-bottom" style="white-space: nowrap;">
+                                            <t t-foreach="state.emojiCategories" t-as="category" t-key="category_index">
+                                                <button 
+                                                    t-on-click="() => this.changeEmojiCategory(category_index)"
+                                                    class="btn btn-sm me-1 flex-shrink-0" 
+                                                    t-attf-class="{{ state.currentEmojiCategory === category_index ? 'btn-primary' : 'btn-light' }}">
+                                                    <t t-esc="category.name.split(' ')[0]"/>
+                                                </button>
+                                            </t>
+                                        </div>
+                                        
+                                        <!-- Emoji grid -->
+                                        <div class="emoji-grid overflow-auto" style="height: 230px;">
+                                            <div class="d-flex flex-wrap">
+                                                <t t-foreach="state.emojiCategories[state.currentEmojiCategory].emojis" t-as="emoji" t-key="emoji_index">
+                                                    <button
+                                                        t-on-click="() => this.insertEmoji(emoji)"
+                                                        class="btn btn-sm btn-light emoji-btn p-1 m-1"
+                                                        style="min-width: 36px; min-height: 36px; font-size: 20px;">
+                                                        <t t-esc="emoji"/>
+                                                    </button>
+                                                </t>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </t>
-                            </div>
-                            
-                            <!-- Emoji grid -->
-                            <div class="emoji-grid overflow-auto" style="height: 230px;">
-                                <div class="d-flex flex-wrap">
-                                    <t t-foreach="state.emojiCategories[state.currentEmojiCategory].emojis" t-as="emoji" t-key="emoji_index">
-                                        <button
-                                            t-on-click="() => this.insertEmoji(emoji)"
-                                            class="btn btn-sm btn-light emoji-btn p-1 m-1"
-                                            style="min-width: 36px; min-height: 36px; font-size: 20px;">
-                                            <t t-esc="emoji"/>
-                                        </button>
-                                    </t>
-                                </div>
-                            </div>
-                        </div>
+                                
                                 <!-- Hidden file input -->
                                 <input 
                                     type="file" 
@@ -276,6 +297,7 @@
                                     t-ref="fileInput"
                                     t-on-change="handleFileChange"
                                 />
+                                
                                 <!-- Attachment button -->
                                 <button 
                                     class="btn btn-link text-muted" 
@@ -284,6 +306,7 @@
                                 >
                                     <i class="fa fa-paperclip fs-5"></i>
                                 </button>
+                                
                                 <textarea 
                                     t-ref="messageInput"
                                     class="form-control bg-light border-0"
@@ -293,22 +316,26 @@
                                     t-on-keydown="handleKeyDown"
                                     style="resize: none;"
                                 ></textarea>
+                                
                                 <!-- Send button -->
-                                <button 
-                                    t-if="state.newMessage.trim() || state.attachment"
-                                    class="btn btn-link text-primary" 
-                                    t-on-click="sendMessage"
-                                >
-                                    <i class="fa fa-paper-plane fs-5"></i>
-                                </button>
+                                <t t-if="state.newMessage.trim() or state.attachment">
+                                    <button 
+                                        class="btn btn-link text-primary" 
+                                        t-on-click="sendMessage"
+                                    >
+                                        <i class="fa fa-paper-plane fs-5"></i>
+                                    </button>
+                                </t>
+                                
                                 <!-- Microphone button for audio recording -->
-                                <button 
-                                    t-if="!state.newMessage.trim() &amp;&amp; !state.attachment"
-                                    class="btn btn-link text-muted" 
-                                    t-on-click="startAudioRecording"
-                                >
-                                    <i class="fa fa-microphone fs-5"></i>
-                                </button>
+                                <t t-if="!state.newMessage.trim() and !state.attachment">
+                                    <button 
+                                        class="btn btn-link text-muted" 
+                                        t-on-click="startAudioRecording"
+                                    >
+                                        <i class="fa fa-microphone fs-5"></i>
+                                    </button>
+                                </t>
                             </div>
                         </t>
                     </div>

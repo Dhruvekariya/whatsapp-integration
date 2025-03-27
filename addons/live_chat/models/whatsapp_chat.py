@@ -168,20 +168,21 @@ class WhatsAppMessage(models.Model):
     attachment_name = fields.Char('Attachment Name')
     attachment_type = fields.Char('Attachment Type')
     attachment_url = fields.Char('Attachment URL')
+     # Add a new field for sender name
+    sender_name = fields.Char('Sender Name', help='Name of the message sender')
+
     
     @api.model
     def create(self, vals):
-        """Update unread count when a new message is created"""
-        res = super(WhatsAppMessage, self).create(vals)
-        if res.sender == 'them' and not res.is_read:
-            res.chat_id.unread += 1
-            
-            # Update the last message and date on the chat
-            res.chat_id.write({
-                'last_message': res.text,
-                'last_message_date': res.time,
-            })
-        return res
+        """Update sender name when creating a message"""
+        # If sender is 'them', try to get the sender name from the chat
+        if vals.get('sender') == 'them':
+            chat = self.env['live_chat.whatsapp.chat'].browse(vals.get('chat_id'))
+            vals['sender_name'] = chat.name
+        elif vals.get('sender') == 'me':
+            vals['sender_name'] = 'Me'
+        
+        return super(WhatsAppMessage, self).create(vals)
     
     @api.model
     def upload_attachment_to_server(self, attachment_data, filename, mimetype):
