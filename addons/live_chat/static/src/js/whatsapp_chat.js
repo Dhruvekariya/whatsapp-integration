@@ -142,7 +142,7 @@ class WhatsAppChat extends Component {
                         setTimeout(() => this.scrollToBottom(), 100);
                     }
             
-                    this.loadChats(false);
+                    this.updateChatOnNewMessage(data.from, data.body);
                 }
             };            
             
@@ -391,6 +391,44 @@ class WhatsAppChat extends Component {
                 chat.name.toLowerCase().includes(query) || 
                 (chat.last_message && chat.last_message.toLowerCase().includes(query))
             );
+        }
+    }
+
+    updateChatOnNewMessage(chatId, lastMessage) {
+        // Find the chat that received the message
+        const chatIndex = this.state.chats.findIndex(chat => chat.chat_id === chatId);
+        
+        if (chatIndex >= 0) {
+            // Create a new array to maintain immutability
+            const updatedChats = [...this.state.chats];
+            const updatedChat = {...updatedChats[chatIndex]};
+            
+            // Update the chat's last message and timestamp
+            updatedChat.last_message = lastMessage;
+            updatedChat.timestamp = Math.floor(Date.now() / 1000); // Current timestamp
+            updatedChat.unread = (updatedChat.unread || 0) + 1; // Increment unread count
+            
+            // If the chat isn't already first, move it to the top
+            if (chatIndex > 0) {
+                // Remove from current position
+                updatedChats.splice(chatIndex, 1);
+                // Add to beginning
+                updatedChats.unshift(updatedChat);
+            } else {
+                // Just update the existing first chat
+                updatedChats[0] = updatedChat;
+            }
+            
+            // Update state
+            this.state.chats = updatedChats;
+            
+            // Also update filtered chats if search is active
+            if (this.state.searchQuery.trim() !== "") {
+                this.handleSearchInput({ target: { value: this.state.searchQuery } });
+            }
+        } else {
+            // If this is a completely new chat, we need to load it
+            this.loadChats(false);
         }
     }
 
