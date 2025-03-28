@@ -91,6 +91,9 @@ class WhatsAppChat extends Component {
             
                     const chatId = data.from;
             
+                    // Update the chat list with the new message
+                    this.updateChatOnNewMessage(chatId, data.body);
+            
                     if (this.state.activeChat && this.state.activeChat.chat_id === chatId) {
                         // Format timestamp
                         const messageTime = data.timestamp
@@ -110,24 +113,20 @@ class WhatsAppChat extends Component {
                             attachmentMimeType: data.attachmentMimeType || null
                         };
             
-                        // **Handle attachments differently**
+                        // Handle attachments
                         if (data.hasAttachment) {
                             if (data.attachmentType === "image" && !data.body) {
-                                // Only image, no text
                                 newMessage.text = null;
                             } else if (data.attachmentType === "image" && data.body) {
-                                // Image with text
                                 newMessage.text = data.body;
                             } else if (data.attachmentType === "video") {
-                                // Video handling
-                                newMessage.videoPreview = true; // Custom property to handle UI
+                                newMessage.videoPreview = true;
                             } else if (data.attachmentType === "document" && data.attachmentMimeType.includes("pdf")) {
-                                // PDF handling (show preview like WhatsApp)
                                 newMessage.showPdfPreview = true;
                             }
                         }
             
-                        // Check if chat messages exist, create array if not
+                        // Initialize messages array if needed
                         if (!this.state.messages[this.state.activeChat.id]) {
                             this.state.messages[this.state.activeChat.id] = [];
                         }
@@ -141,10 +140,8 @@ class WhatsAppChat extends Component {
                         // Scroll to bottom
                         setTimeout(() => this.scrollToBottom(), 100);
                     }
-            
-                    this.updateChatOnNewMessage(data.from, data.body);
                 }
-            };            
+            };           
             
         });
 
@@ -399,23 +396,24 @@ class WhatsAppChat extends Component {
         const chatIndex = this.state.chats.findIndex(chat => chat.chat_id === chatId);
         
         if (chatIndex >= 0) {
-            // Create a new array to maintain immutability
+            // Create new arrays to maintain immutability
             const updatedChats = [...this.state.chats];
             const updatedChat = {...updatedChats[chatIndex]};
             
             // Update the chat's last message and timestamp
             updatedChat.last_message = lastMessage;
-            updatedChat.timestamp = Math.floor(Date.now() / 1000); // Current timestamp
-            updatedChat.unread = (updatedChat.unread || 0) + 1; // Increment unread count
+            updatedChat.timestamp = Math.floor(Date.now() / 1000);
             
-            // If the chat isn't already first, move it to the top
+            // Only increment unread if this isn't the active chat
+            if (!this.state.activeChat || this.state.activeChat.chat_id !== chatId) {
+                updatedChat.unread = (updatedChat.unread || 0) + 1;
+            }
+            
+            // Move to top if not already first
             if (chatIndex > 0) {
-                // Remove from current position
                 updatedChats.splice(chatIndex, 1);
-                // Add to beginning
                 updatedChats.unshift(updatedChat);
             } else {
-                // Just update the existing first chat
                 updatedChats[0] = updatedChat;
             }
             
@@ -425,9 +423,12 @@ class WhatsAppChat extends Component {
             // Also update filtered chats if search is active
             if (this.state.searchQuery.trim() !== "") {
                 this.handleSearchInput({ target: { value: this.state.searchQuery } });
+            } else {
+                // Ensure filtered chats are in sync when no search is active
+                this.state.filteredChats = [...updatedChats];
             }
         } else {
-            // If this is a completely new chat, we need to load it
+            // If this is a completely new chat, load it
             this.loadChats(false);
         }
     }
@@ -492,40 +493,49 @@ class WhatsAppChat extends Component {
     }
 
     async selectChat(chat) {
-        // Update active state in chats
+        // Mark all messages as read by resetting unread count
         this.state.chats = this.state.chats.map(c => ({
             ...c,
-            isActive: c.id === chat.id
+            isActive: c.id === chat.id,
+            unread: c.id === chat.id ? 0 : c.unread // Reset unread count for active chat
         }));
-
+    
+        // Update filtered chats to reflect unread count changes
+        if (this.state.searchQuery.trim() !== "") {
+            this.handleSearchInput({ target: { value: this.state.searchQuery } });
+        }
+    
+        // Set the active chat
         this.state.activeChat = chat;
         
         // Clear any existing attachment when switching chats
         this.state.attachment = null;
         this.state.attachmentPreview = null;
-
-        // Load messages if not already loaded
-        if (!this.state.messages[chat.id]) {
-            try {
-                const messages = await fetch(`http://localhost:3000/get-messages/${chat.chat_id}`, {
-                    method: 'GET'
-                });
-
-                let messagesData = await messages.json()
-
-                this.state.messages[chat.id] = messagesData?.data?.messages.map(msg => {
-                    // Format date using the timestamp from server
+    
+        // Always refresh messages when selecting a chat
+        try {
+            const response = await fetch(`http://localhost:3000/get-messages/${chat.chat_id}`, {
+                method: 'GET'
+            });
+    
+            let messagesData = await response.json();
+            
+            if (messagesData?.data?.messages) {
+                // Process and format messages
+                const formattedMessages = messagesData.data.messages.map(msg => {
                     const timestamp = msg?.timestamp ? msg.timestamp * 1000 : Date.now();
                     const date = new Date(timestamp);
-
-                    console.log("msg----",msg);
                     
                     return {
+                        id: msg?.id || `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                         text: msg?.body,
                         sender: msg?.fromMe ? "me" : "them",
-                        senderName: msg?.senderName || (msg?.fromMe ? "Me" : "Contact"), 
+                        senderName: msg?.senderName || (msg?.fromMe ? "Me" : "Contact"),
                         time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+                        timestamp: timestamp,
                         sending: msg?.status === 'sending',
+                        delivered: msg?.status === 'delivered',
+                        read: msg?.status === 'read',
                         failed: msg?.status === 'failed',
                         hasAttachment: msg?.hasMedia || false,
                         attachmentName: msg?.mediaFilename || null,
@@ -534,15 +544,37 @@ class WhatsAppChat extends Component {
                         attachmentMimeType: msg?.mimetype || null
                     };
                 });
-
-                // Scroll to the bottom after messages are loaded
-                setTimeout(() => this.scrollToBottom(), 100);
-            } catch (error) {
-                console.error("Error loading messages:", error);
+    
+                // Update messages in state
+                this.state.messages = {
+                    ...this.state.messages,
+                    [chat.id]: formattedMessages
+                };
+    
+                // Update last message in chat list to ensure consistency
+                if (formattedMessages.length > 0) {
+                    const lastMessage = formattedMessages[formattedMessages.length - 1];
+                    this.state.chats = this.state.chats.map(c => {
+                        if (c.id === chat.id) {
+                            return {
+                                ...c,
+                                last_message: lastMessage.text || (lastMessage.hasAttachment ? `[${lastMessage.attachmentType}]` : ''),
+                                timestamp: lastMessage.timestamp
+                            };
+                        }
+                        return c;
+                    });
+                }
             }
-        } else {
-            // If messages are already loaded, just scroll to bottom
+    
+            // Scroll to bottom after messages are loaded
             setTimeout(() => this.scrollToBottom(), 100);
+        } catch (error) {
+            console.error("Error loading messages:", error);
+            // Fallback to existing messages if available
+            if (!this.state.messages[chat.id]) {
+                this.state.messages[chat.id] = [];
+            }
         }
     }
 
