@@ -87,12 +87,12 @@ class WhatsAppChat extends Component {
                 const data = JSON.parse(event.data);
                 
                 if (data.type === "newMessage") {
-                    console.log("Received message type:", data.hasAttachment ? data.attachmentType : "text");
+                    console.log("Received message type:", data);
             
                     const chatId = data.from;
             
                     // Update the chat list with the new message
-                    this.updateChatOnNewMessage(chatId, data.body);
+                    this.updateChatOnNewMessage(chatId, data );
             
                     if (this.state.activeChat && this.state.activeChat.chat_id === chatId) {
                         // Format timestamp
@@ -108,6 +108,7 @@ class WhatsAppChat extends Component {
                             failed: false,
                             hasAttachment: data.hasAttachment || false,
                             attachmentType: data.attachmentType || null,
+                            last_message_type: data.attachmentType || null,
                             attachmentName: data.attachmentName || null,
                             attachmentUrl: data.attachmentUrl || null,
                             attachmentMimeType: data.attachmentMimeType || null
@@ -401,7 +402,8 @@ class WhatsAppChat extends Component {
             const updatedChat = {...updatedChats[chatIndex]};
             
             // Update the chat's last message and timestamp
-            updatedChat.last_message = lastMessage;
+            updatedChat.last_message = lastMessage?.body;
+            updatedChat.last_message_type = lastMessage?.attachmentType || "chat";
             updatedChat.timestamp = Math.floor(Date.now() / 1000);
             
             // Only increment unread if this isn't the active chat

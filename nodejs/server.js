@@ -263,6 +263,7 @@ client.on('message', async (message) => {
 
             messageData.hasAttachment = true;
             messageData.attachmentType = attachmentType;
+            messageData.last_message_type = attachmentType;
             messageData.attachmentMimeType = media.mimetype;
             messageData.attachmentUrl = `data:${media.mimetype};base64,${media.data}`;
 

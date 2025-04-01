@@ -74,7 +74,21 @@
                                             <t t-if="chat.sender">
                                                 <span class="me-1"><t t-esc="chat.sender"/>:</span>
                                             </t>
-                                            <t t-esc="chat.last_message"/>
+                                            <t t-if="chat.last_message_type == 'image'">
+                                                <i class="fa fa-image me-1"></i> Photo
+                                            </t>
+                                            <t t-elif="chat.last_message_type == 'video'">
+                                                <i class="fa fa-camera me-1"></i> video
+                                            </t>
+                                            <t t-elif="chat.last_message_type == 'ptt' or chat.last_message_type == 'audio'">
+                                                <i class="fa fa-microphone me-1"></i> Audio
+                                            </t>
+                                            <t t-elif="chat.last_message_type == 'document'">
+                                                <i class="fa fa-file me-1"></i> Document
+                                            </t>
+                                            <t t-else="">
+                                                <t t-esc="chat.last_message"/>
+                                            </t>
                                         </div>
                                         <t t-if="chat.unread">
                                             <span class="badge rounded-pill bg-success ms-2">

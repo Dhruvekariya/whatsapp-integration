@@ -18,6 +18,7 @@ class WhatsAppChat(models.Model):
     chat_id = fields.Text('Chat Id')
     phone = fields.Char('Phone Number', required=True)
     last_message = fields.Text('Last Message')
+    last_message_type = fields.Text('Last Message Type')
     last_message_date = fields.Datetime('Last Message Date')
     unread = fields.Integer('Unread Messages', default=0)
     active = fields.Boolean('Active', default=True)
@@ -30,7 +31,7 @@ class WhatsAppChat(models.Model):
         """Refresh chats from WhatsApp API"""
         # This is where you would implement WhatsApp API integration
         # For demo purposes, we'll just return existing chats
-        return self.search([]).read(['id', 'name', 'phone', 'last_message', 'unread', 'active', "profilePicUrl"])
+        return self.search([]).read(['id', 'name', 'phone', 'last_message',"last_message_type", 'unread', 'active', "profilePicUrl"])
     
     def mark_as_read(self):
         """Mark all messages in the chat as read"""
