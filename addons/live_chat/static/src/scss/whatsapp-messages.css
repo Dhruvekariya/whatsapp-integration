@@ -32,7 +32,10 @@ body {
 }
 
 .chat-list {
-  overflow-y: auto;
+  overflow-y: auto;  /* Enables vertical scrolling */
+  overflow-x: hidden; /* Prevents horizontal scrolling */
+  height: calc(100vh - 125px);
+  background-color: #ffffff;
 }
 
 .chat-item {

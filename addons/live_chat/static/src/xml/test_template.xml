@@ -111,7 +111,7 @@
                     </t>
                     
                     <t t-if="!state.loading">
-                        <div class="chat-list overflow-auto" style="height: calc(100vh - 125px); background-color: #ffffff;">
+                       <div class="chat-list" style="height: calc(100vh - 125px); background-color: #ffffff; overflow-y: auto; overflow-x: hidden;">
                             <t t-foreach="state.filteredChats" t-as="chat" t-key="chat.id">
                                 <div 
                                     class="chat-item p-2 d-flex align-items-center"
@@ -230,9 +230,6 @@
                                 <small class="text-muted">online</small>
                             </div>
                             <div>
-                                <button class="btn btn-link p-1">
-                                    <i class="fa fa-search"></i>
-                                </button>
                                 <button class="btn btn-link p-1" t-on-click="() => this.showLogoutConfirmation()">
                                     <i class="fa fa-ellipsis-v"></i>
                                 </button>
