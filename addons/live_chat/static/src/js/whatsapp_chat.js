@@ -28,6 +28,13 @@ class WhatsAppChat extends Component {
             },
             isRecording: false,
             recordingTime: 0,
+            showMediaViewer: false,
+            viewedMedia: {
+                url: null,
+                type: null,
+                name: null,
+                mimeType: null
+            },
             audioRecorder: null,
             audioChunks: [],
             recordingInterval: null,
@@ -98,6 +105,16 @@ class WhatsAppChat extends Component {
 // Add these methods to your component
 showLogoutConfirmation() {
     this.state.showLogoutModal = true;
+}
+// Add this method to your component
+viewMedia(media) {
+    this.state.viewedMedia = {
+        url: media.url,
+        type: media.type,
+        name: media.name || 'Media',
+        mimeType: media.mimeType
+    };
+    this.state.showMediaViewer = true;
 }
 
 async logout() {

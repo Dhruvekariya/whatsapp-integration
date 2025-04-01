@@ -479,6 +479,7 @@ app.get("/get-messages/:chatId", async (req, res) => {
         const formattedMessages = await Promise.all(
             messages.map(async (msg) => {
                 let mediaBase64 = null;
+                let mediaDetails = null;
                 let senderName = "";
 
                  // Determine sender name
@@ -493,6 +494,12 @@ app.get("/get-messages/:chatId", async (req, res) => {
                     const media = await msg.downloadMedia();
                     if (media) {
                         mediaBase64 = `data:${media.mimetype};base64,${media.data}`;
+                        mediaDetails = {
+                            mimeType: media.mimetype,
+                            fileName: media.filename || null,
+                            fileSize: media.filesize || null,
+                            isDocument: media.mimetype.startsWith('application/')
+                        };
 
                     }
                 }
@@ -505,6 +512,7 @@ app.get("/get-messages/:chatId", async (req, res) => {
                     type: msg.type,
                     hasMedia: msg.hasMedia,
                     mediaBase64: mediaBase64,
+                    mediaDetails: mediaDetails,
                     author: msg.author || null,
                     senderName: senderName, // Add sender name to the response
                 };

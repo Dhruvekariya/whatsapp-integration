@@ -2,6 +2,45 @@
 <templates xml:space="preserve">
     <t t-name="live_chat.WhatsAppChat" owl="1">
         <div class="o_whatsapp_chat d-flex h-100" style="background-color: #f0f2f5;">
+         <!-- Media Viewer Modal -->
+    <t t-if="state.showMediaViewer">
+        <div class="modal-backdrop fade show" style="z-index: 1100;"></div>
+        <div class="modal fade show d-block" style="z-index: 1105;" t-on-click.self="() => this.state.showMediaViewer = false">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <t t-esc="state.viewedMedia.name || 'Media'"/>
+                        </h5>
+                        <button type="button" class="btn-close" t-on-click="() => this.state.showMediaViewer = false"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <t t-if="state.viewedMedia.type === 'image'">
+                            <img t-att-src="state.viewedMedia.url" class="img-fluid" style="max-height: 70vh;"/>
+                        </t>
+                        <t t-elif="state.viewedMedia.type === 'video'">
+                            <video controls="true" autoplay="true" class="w-100" style="max-height: 70vh;">
+                                <source t-att-src="state.viewedMedia.url" t-att-type="state.viewedMedia.mimeType"/>
+                                Your browser does not support the video tag.
+                            </video>
+                        </t>
+                        <t t-elif="state.viewedMedia.type === 'document'">
+                            <div class="document-viewer">
+                                <iframe t-att-src="state.viewedMedia.url" 
+                                        style="width: 100%; height: 70vh; border: none;"></iframe>
+                            </div>
+                        </t>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" t-on-click="() => this.state.showMediaViewer = false">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+    
              <!-- QR Code Screen (shown when not authenticated) -->
             <t t-if="!state.isAuthenticated">
                 <div class="qr-container h-100 w-100 d-flex flex-column justify-content-center align-items-center">
@@ -138,9 +177,6 @@
                                                 <t t-if="chat.sender">
                                                     <span class="me-1"><t t-esc="chat.sender"/>:</span>
                                                 </t>
-                                                <t t-if="chat.sender">
-                                                <span class="me-1"><t t-esc="chat.sender"/>:</span>
-                                                </t>
                                                 <t t-if="chat.last_message_type == 'image'">
                                                     <i class="fa fa-image me-1"></i> Photo
                                                 </t>
@@ -233,31 +269,31 @@
                                 <button class="btn btn-link p-1" t-on-click="() => this.showLogoutConfirmation()">
                                     <i class="fa fa-ellipsis-v"></i>
                                 </button>
-                        </div>
+                            </div>
                             <t t-if="state.showLogoutModal">
-                            <div class="modal-backdrop fade show" style="z-index: 1050;"></div>
-                            <div class="modal fade show d-block" style="z-index: 1055;" t-on-click.self="() => this.state.showLogoutModal = false">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Confirm Logout</h5>
-                                        <button type="button" class="btn-close" t-on-click="() => this.state.showLogoutModal = false"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <p>Are you sure you want to logout from WhatsApp?</p>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" t-on-click="() => this.state.showLogoutModal = false">
-                                            Cancel
-                                        </button>
-                                        <button type="button" class="btn btn-danger" t-on-click="logout">
-                                            Logout
-                                        </button>
+                                <div class="modal-backdrop fade show" style="z-index: 1050;"></div>
+                                <div class="modal fade show d-block" style="z-index: 1055;" t-on-click.self="() => this.state.showLogoutModal = false">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Confirm Logout</h5>
+                                                <button type="button" class="btn-close" t-on-click="() => this.state.showLogoutModal = false"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Are you sure you want to logout from WhatsApp?</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" t-on-click="() => this.state.showLogoutModal = false">
+                                                    Cancel
+                                                </button>
+                                                <button type="button" class="btn btn-danger" t-on-click="logout">
+                                                    Logout
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </t>
+                            </t>
                         </div>
                         
                         <!-- Messages area -->
@@ -282,43 +318,61 @@
                                         <div class="message-text"><t t-esc="message.text"/></div>
                                         
                                         <!-- Attachment handling -->
-                                        <t t-if="message.hasAttachment">
-                                            <div class="message-attachment mt-1">
-                                                <t t-if="message.attachmentType == 'image'">
-                                                    <img t-att-src="message.attachmentUrl" 
-                                                        class="img-fluid rounded mt-2" 
-                                                        alt="Image Attachment" 
-                                                        style="max-width: 200px;"/>
-                                                </t>
+                                       <t t-if="message.hasAttachment">
+                                        <div class="message-attachment mt-1">
+                                            <t t-if="message.attachmentType == 'image'">
+                                                <img t-att-src="message.attachmentUrl" 
+                                                    class="img-fluid rounded mt-2" 
+                                                    alt="Image Attachment" 
+                                                    style="max-width: 200px; cursor: pointer;"
+                                                    t-on-click="() => this.viewMedia({
+                                                        url: message.attachmentUrl,
+                                                        type: 'image',
+                                                        name: message.attachmentName || 'Image',
+                                                        mimeType: 'image/jpeg'
+                                                    })"/>
+                                            </t>
 
-                                                <t t-elif="message.attachmentType == 'video'">
-                                                    <video class="w-100 mt-2" style="max-width: 300px;" controls="controls">
-                                                        <source t-att-src="message.attachmentUrl" t-att-type="'video/mp4'"/>
+                                            <t t-elif="message.attachmentType == 'video'">
+                                                <div style="position: relative; cursor: pointer;"
+                                                    t-on-click="() => this.viewMedia({
+                                                        url: message.attachmentUrl,
+                                                        type: 'video',
+                                                        name: message.attachmentName || 'Video',
+                                                        mimeType: 'video/mp4'
+                                                    })">
+                                                    <video class="w-100 mt-2" style="max-width: 300px;">
+                                                        <source t-att-src="message.attachmentUrl" type="video/mp4"/>
                                                         Your browser does not support the video tag.
                                                     </video>
-                                                </t>
-                                                <t t-elif="message.attachmentType == 'audio' or message.attachmentType == 'ptt'">
-                                                    <audio controls="true" class="mt-2">
-                                                        <source t-att-src="message.attachmentUrl" type="audio/ogg"/>
-                                                        Your browser does not support the audio element.
-                                                    </audio>
-                                                </t>
-
-                                                <t t-elif="message.attachmentType == 'document'">
-                                                    <div class="document-attachment p-2 bg-light rounded mt-2 d-flex align-items-center">
-                                                        <i class="fa fa-file me-2 text-primary"></i>
-                                                        <div class="flex-grow-1 text-truncate">
-                                                            <t t-esc="message.attachmentName"/>
-                                                        </div>
-                                                        <a t-att-href="message.attachmentUrl" 
-                                                        download="document" 
-                                                        class="ms-2 text-decoration-none">
-                                                            <i class="fa fa-download"></i>
-                                                        </a>
+                                                    <div class="play-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background-color: rgba(0,0,0,0.5); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                                        <i class="fa fa-play"></i>
                                                     </div>
-                                                </t>
-                                            </div>
-                                        </t>
+                                                </div>
+                                            </t>
+                                            
+                                            <t t-elif="message.attachmentType == 'audio' or message.attachmentType == 'ptt'">
+                                                <audio controls="true" class="mt-2">
+                                                    <source t-att-src="message.attachmentUrl" type="audio/ogg"/>
+                                                    Your browser does not support the audio element.
+                                                </audio>
+                                            </t>
+
+                                            <t t-elif="message.attachmentType == 'document'">
+                                                <div class="document-attachment p-2 bg-light rounded mt-2 d-flex align-items-center">
+                                                    <i class="fa fa-file me-2 text-primary"></i>
+                                                    <div class="flex-grow-1 text-truncate">
+                                                        <t t-esc="message.attachmentName"/>
+                                                    </div>
+                                                    <a t-att-href="message.attachmentUrl" 
+                                                    download="document" 
+                                                    class="ms-2 text-decoration-none">
+                                                        <i class="fa fa-download"></i>
+                                                    </a>
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </t>
                                         
                                         <div class="message-time small text-muted text-end">
                                             <small><t t-esc="message.time"/></small>
@@ -471,6 +525,5 @@
                 </div>
             </t>
         </div>
-
     </t>
 </templates>
