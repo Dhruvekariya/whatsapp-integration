@@ -12,7 +12,8 @@ class WhatsAppChat extends Component {
             activeChat: null,
             newMessage: "",
             loading: true,
-              isAuthenticated: false,
+            showLogoutModal: false,
+            isAuthenticated: false,
             qrCode: null,
             connectionStatus: 'disconnected', // 'disconnected', 'connecting', 'connected', 'failed'
             socket: null,
@@ -94,6 +95,48 @@ class WhatsAppChat extends Component {
             }
         });
     }
+// Add these methods to your component
+showLogoutConfirmation() {
+    this.state.showLogoutModal = true;
+}
+
+async logout() {
+    try {
+        this.state.showLogoutModal = false;
+        this.state.loading = true;
+        
+        const response = await fetch('http://localhost:3000/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Reset all chat state
+            this.state.isAuthenticated = false;
+            this.state.chats = [];
+            this.state.messages = {};
+            this.state.activeChat = null;
+            this.state.qrCode = null;
+            this.state.connectionStatus = 'disconnected';
+            
+            // Reconnect WebSocket to get new QR code
+            if (this.ws) {
+                this.ws.close();
+            }
+            this.setupWebSocket();
+        } else {
+            console.error("Logout failed:", result.message);
+        }
+    } catch (error) {
+        console.error("Error during logout:", error);
+    } finally {
+        this.state.loading = false;
+    }
+}
 
     async checkConnectionStatus() {
         try {
