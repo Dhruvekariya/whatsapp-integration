@@ -140,11 +140,13 @@ class WhatsAppChat extends Component {
                     
                 }, 5000);
             }
-            else if (data.type === 'newMessage') {
-                // Handle incoming messages (your existing code)
+            else if (data.type === "newMessage") {
+                console.log("Received message type:", data);
+        
                 const chatId = data.from;
-                this.updateChatOnNewMessage(chatId, data.body);
-
+        
+                // Update the chat list with the new message
+                this.updateChatOnNewMessage(chatId, data );
                 if (this.state.activeChat && this.state.activeChat.chat_id === chatId) {
                     const messageTime = data.timestamp
                         ? new Date(data.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
