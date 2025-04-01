@@ -362,29 +362,26 @@ app.get('/status', (_req, res) => {
 // Enhanced chat retrieval endpoint with better performance
 app.get("/get-chats", async (_req, res) => {
     try {
-        if (!client) {
-            return errorResponse(res, new Error("WhatsApp client not initialized"), 500);
-        }
-
-        if (!client.info) {
-            return errorResponse(res, new Error("WhatsApp client not authenticated yet"), 403);
+        if (!client || !client.info || !client.info.wid) {
+            return errorResponse(res, new Error("WhatsApp client is not initialized or authenticated"), 500);
         }
 
         console.log("Attempting to get chats...");
 
-        // Increased timeout for more complex operations
+        // Increased timeout for fetching chats
         const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Operation timed out")), 15000) // 15 seconds
+            setTimeout(() => reject(new Error("Operation timed out")), 30000) // 30 seconds timeout
         );
 
-        // Get chats with a timeout
+        console.time("Fetching Chats");
         const chatsPromise = client.getChats();
         let chats = await Promise.race([chatsPromise, timeoutPromise]);
+        console.timeEnd("Fetching Chats");
 
         console.log(`Retrieved ${chats.length} chats`);
 
-        // Simplify the response to reduce processing time
-        let formattedChats = await Promise.all(chats.map(async (chat) => ({
+        // Format chat data
+        let formattedChats = chats.map((chat) => ({
             ...chat,
             id: chat.id._serialized,
             chat_id: chat.id._serialized,
@@ -393,50 +390,40 @@ app.get("/get-chats", async (_req, res) => {
             isGroup: chat.isGroup || false,
             unreadCount: chat.unreadCount || 0,
             profilePicUrl: ""
-        })));
+        }));
 
-        // Fetch profile pictures with improved efficiency
+        // Fetch profile pictures efficiently
         const fetchProfilePic = async (chat) => {
+            if (chat.isGroup) return chat; // Skip fetching for groups
+            
             try {
-                // Use Promise.race with a shorter timeout for each profile pic fetch
-                const profilePicPromise = client.getProfilePicUrl(chat.id);
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error("Profile pic fetch timeout")), 3000) // Slightly longer timeout
-                );
-
                 chat.profilePicUrl = await Promise.race([
-                    profilePicPromise,
-                    timeoutPromise
+                    client.getProfilePicUrl(chat.id),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error("Profile pic fetch timeout")), 2000))
                 ]);
             } catch (error) {
-                chat.profilePicUrl = "";
-                console.warn(`Failed to fetch profile pic for chat ${chat.id}:`, error.message);
+                chat.profilePicUrl = ""; // Default if fetching fails
             }
             return chat;
         };
 
-        // Concurrency set to 10 with more robust error handling
-        const CONCURRENCY_LIMIT = 10;
+        // Batch process profile picture fetching
+        const CHUNK_SIZE = 50; // Process chats in chunks of 50
         const results = [];
 
-        for (let i = 0; i < formattedChats.length; i += CONCURRENCY_LIMIT) {
-            const batch = formattedChats.slice(i, i + CONCURRENCY_LIMIT);
-            
-            // Process batch with all-settle to continue even if some promises fail
+        for (let i = 0; i < formattedChats.length; i += CHUNK_SIZE) {
+            const batch = formattedChats.slice(i, i + CHUNK_SIZE);
             const batchResults = await Promise.allSettled(batch.map(fetchProfilePic));
-            
-            // Add successfully processed chats to results
+
             batchResults.forEach((result, index) => {
                 if (result.status === 'fulfilled') {
                     results.push(result.value);
                 } else {
-                    // Log failed chats but continue processing
                     console.error(`Failed to process chat at index ${i + index}:`, result.reason);
-                    results.push(batch[index]); // Add original chat even if pic fetch failed
+                    results.push(batch[index]); // Add chat even if profile fetch failed
                 }
             });
-
-            console.log(`Processed batch ${Math.floor(i/CONCURRENCY_LIMIT) + 1}, Total processed: ${results.length}`);
+            console.log(`Processed batch ${Math.floor(i/CHUNK_SIZE) + 1}, Total processed: ${results.length}`);
         }
 
         return successResponse(res, {

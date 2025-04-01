@@ -228,3 +228,38 @@ body {
   background-color: #ddd;
   border-radius: 2px;
 }
+/* QR Code Screen Styles */
+.qr-container {
+  background-color: #f0f2f5;
+}
+
+.qr-box {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.qr-code-container {
+  background-color: white;
+  border: 1px solid #e1e1e1;
+  border-radius: 8px;
+  display: inline-block;
+  padding: 15px;
+}
+
+.qr-code-container img {
+  width: 250px;
+  height: 250px;
+}
+
+.instructions ol {
+  padding-left: 20px;
+}
+
+.instructions li {
+  margin-bottom: 8px;
+}
+
+.connection-status {
+  min-height: 50px;
+}

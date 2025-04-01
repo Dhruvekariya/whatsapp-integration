@@ -20,7 +20,7 @@ class WhatsAppController(http.Controller):
 
             # Request chats from the Node.js server
             try:
-                response = requests.get(f"{whatsapp_server_url}/get-chats", timeout=120)
+                response = requests.get(f"{whatsapp_server_url}/get-chats", timeout=300)
                 _logger.info("Response received with status: %s", response.status_code)
                 _logger.debug("Response content: %s", response.text[:1000])  # Log first 1000 characters
             except requests.RequestException as req_error:

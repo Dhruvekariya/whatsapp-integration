@@ -12,6 +12,9 @@ class WhatsAppChat extends Component {
             activeChat: null,
             newMessage: "",
             loading: true,
+              isAuthenticated: false,
+            qrCode: null,
+            connectionStatus: 'disconnected', // 'disconnected', 'connecting', 'connected', 'failed'
             socket: null,
             attachment: null,
             attachmentPreview: null, // For preview before sending
@@ -79,80 +82,120 @@ class WhatsAppChat extends Component {
         this.mediaPreviewRef = useRef("mediaPreview");
         this.messageInputRef = useRef("messageInput");
 
-        onMounted(() => {
+        onMounted(async () => {
+            await this.checkConnectionStatus();
+            this.setupWebSocket();
             this.loadChats();
-            this.socket = new WebSocket("ws://localhost:3000");
-            
-            this.socket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                
-                if (data.type === "newMessage") {
-                    console.log("Received message type:", data);
-            
-                    const chatId = data.from;
-            
-                    // Update the chat list with the new message
-                    this.updateChatOnNewMessage(chatId, data );
-            
-                    if (this.state.activeChat && this.state.activeChat.chat_id === chatId) {
-                        // Format timestamp
-                        const messageTime = data.timestamp
-                            ? new Date(data.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
-                            : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-            
-                        let newMessage = {
-                            text: data.body,
-                            sender: "them",
-                            time: messageTime,
-                            sending: false,
-                            failed: false,
-                            hasAttachment: data.hasAttachment || false,
-                            attachmentType: data.attachmentType || null,
-                            last_message_type: data.attachmentType || null,
-                            attachmentName: data.attachmentName || null,
-                            attachmentUrl: data.attachmentUrl || null,
-                            attachmentMimeType: data.attachmentMimeType || null
-                        };
-            
-                        // Handle attachments
-                        if (data.hasAttachment) {
-                            if (data.attachmentType === "image" && !data.body) {
-                                newMessage.text = null;
-                            } else if (data.attachmentType === "image" && data.body) {
-                                newMessage.text = data.body;
-                            } else if (data.attachmentType === "video") {
-                                newMessage.videoPreview = true;
-                            } else if (data.attachmentType === "document" && data.attachmentMimeType.includes("pdf")) {
-                                newMessage.showPdfPreview = true;
-                            }
-                        }
-            
-                        // Initialize messages array if needed
-                        if (!this.state.messages[this.state.activeChat.id]) {
-                            this.state.messages[this.state.activeChat.id] = [];
-                        }
-            
-                        // Add new message
-                        this.state.messages[this.state.activeChat.id].push(newMessage);
-            
-                        // Force update state
-                        this.state.messages = { ...this.state.messages };
-            
-                        // Scroll to bottom
-                        setTimeout(() => this.scrollToBottom(), 100);
-                    }
-                }
-            };           
-            
         });
 
         onWillUnmount(() => {
-            if (this.state.socket) {
-                this.state.socket.close();
+            if (this.ws) {
+                this.ws.close();
             }
         });
     }
-    
+
+    async checkConnectionStatus() {
+        try {
+            const response = await fetch('http://localhost:3000/status');
+            const data = await response.json();
+            
+            if (data.success && data.data.authenticated) {
+                this.state.isAuthenticated = true;
+                this.state.connectionStatus = 'connected';
+            } else if (data.success && data.data.state === 'connecting') {
+                this.state.connectionStatus = 'connecting';
+                // If we have a QR code, show it
+                if (data.data.qrCode) {
+                    this.state.qrCode = data.data.qrCode;
+                }
+            } else {
+                this.state.connectionStatus = 'disconnected';
+            }
+        } catch (error) {
+            console.error("Error checking connection status:", error);
+            this.state.connectionStatus = 'failed';
+        }
+    }
+
+    setupWebSocket() {
+        this.ws = new WebSocket("ws://localhost:3000");
+        
+        this.ws.onopen = () => {
+            console.log("WebSocket connection established");
+        };
+        
+        this.ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'qrCode') {
+                this.state.qrCode = data.qrCode;
+                this.state.connectionStatus = 'connecting';
+            } 
+            else if (data.type === 'whatsappReady') {
+                setTimeout(() => {
+                    this.state.isAuthenticated = true;
+                    this.state.connectionStatus = 'connected';
+                    this.loadChats();
+                    
+                }, 5000);
+            }
+            else if (data.type === 'newMessage') {
+                // Handle incoming messages (your existing code)
+                const chatId = data.from;
+                this.updateChatOnNewMessage(chatId, data.body);
+
+                if (this.state.activeChat && this.state.activeChat.chat_id === chatId) {
+                    const messageTime = data.timestamp
+                        ? new Date(data.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+                        : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
+                    let newMessage = {
+                        text: data.body,
+                        sender: "them",
+                        time: messageTime,
+                        sending: false,
+                        failed: false,
+                        hasAttachment: data.hasAttachment || false,
+                        attachmentType: data.attachmentType || null,
+                        last_message_type: data.attachmentType || null,
+                        attachmentName: data.attachmentName || null,
+                        attachmentUrl: data.attachmentUrl || null,
+                        attachmentMimeType: data.attachmentMimeType || null
+                    };
+
+                    if (data.hasAttachment) {
+                        if (data.attachmentType === "image" && !data.body) {
+                            newMessage.text = null;
+                        } else if (data.attachmentType === "image" && data.body) {
+                            newMessage.text = data.body;
+                        } else if (data.attachmentType === "video") {
+                            newMessage.videoPreview = true;
+                        } else if (data.attachmentType === "document" && data.attachmentMimeType.includes("pdf")) {
+                            newMessage.showPdfPreview = true;
+                        }
+                    }
+
+                    if (!this.state.messages[this.state.activeChat.id]) {
+                        this.state.messages[this.state.activeChat.id] = [];
+                    }
+
+                    this.state.messages[this.state.activeChat.id].push(newMessage);
+                    this.state.messages = { ...this.state.messages };
+                    setTimeout(() => this.scrollToBottom(), 100);
+                }
+            }
+        };
+        
+        this.ws.onerror = (error) => {
+            console.error("WebSocket error:", error);
+            this.state.connectionStatus = 'failed';
+        };
+        
+        this.ws.onclose = () => {
+            console.log("WebSocket connection closed");
+        };
+    }
         // Add this method to toggle emoji picker
         toggleEmojiPicker() {
             this.state.emojiPickerOpen = !this.state.emojiPickerOpen;
