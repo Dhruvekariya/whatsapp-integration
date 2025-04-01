@@ -233,12 +233,34 @@
                                 <button class="btn btn-link p-1">
                                     <i class="fa fa-search"></i>
                                 </button>
-                                <button class="btn btn-link p-1">
+                                <button class="btn btn-link p-1" t-on-click="() => this.showLogoutConfirmation()">
                                     <i class="fa fa-ellipsis-v"></i>
                                 </button>
-                                
+                        </div>
+                            <t t-if="state.showLogoutModal">
+                            <div class="modal-backdrop fade show" style="z-index: 1050;"></div>
+                            <div class="modal fade show d-block" style="z-index: 1055;" t-on-click.self="() => this.state.showLogoutModal = false">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Confirm Logout</h5>
+                                        <button type="button" class="btn-close" t-on-click="() => this.state.showLogoutModal = false"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Are you sure you want to logout from WhatsApp?</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" t-on-click="() => this.state.showLogoutModal = false">
+                                            Cancel
+                                        </button>
+                                        <button type="button" class="btn btn-danger" t-on-click="logout">
+                                            Logout
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-
+                        </div>
+                    </t>
                         </div>
                         
                         <!-- Messages area -->
