@@ -42,44 +42,49 @@
     </t>
     
              <!-- QR Code Screen (shown when not authenticated) -->
-            <t t-if="!state.isAuthenticated">
-                <div class="qr-container h-100 w-100 d-flex flex-column justify-content-center align-items-center">
-                    <div class="qr-box bg-white p-4 rounded shadow text-center" style="max-width: 400px;">
-                        <h4 class="mb-3">Connect WhatsApp</h4>
-                        <p class="text-muted mb-3">Scan the QR code with your WhatsApp mobile app</p>
-                        
-                        <!-- QR Code Image -->
-                        <div class="qr-code-container mb-3 p-3 border rounded bg-white">
-                            <t t-if="state.qrCode">
-                                <img t-att-src="state.qrCode" alt="WhatsApp QR Code" class="img-fluid"/>
-                            </t>
-                            <t t-else="">
-                                <div class="spinner-border text-success" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </t>
-                        </div>
-                        
-                        <div class="instructions mt-3">
-                            <ol class="text-start">
-                                <li>Open WhatsApp on your phone</li>
-                                <li>Tap Menu on Android, or Settings on iPhone</li>
-                                <li>Tap Linked devices and then Link a device</li>
-                                <li>Point your phone at this screen to scan the QR code</li>
-                            </ol>
-                        </div>
-                        
-                        <div class="connection-status mt-3">
-                            <t t-if="state.connectionStatus === 'connecting'">
-                                <div class="alert alert-info">Waiting for QR scan...</div>
-                            </t>
-                            <t t-if="state.connectionStatus === 'failed'">
-                                <div class="alert alert-danger">Connection failed. Please try again.</div>
-                            </t>
-                        </div>
+<t t-if="!state.isAuthenticated">
+    <div class="qr-container h-100 w-100 d-flex flex-column justify-content-center align-items-center">
+        <div class="qr-box bg-white p-4 rounded shadow text-center" style="max-width: 400px;">
+            <h4 class="mb-3">Connect WhatsApp</h4>
+            <p class="text-muted mb-3">Scan the QR code with your WhatsApp mobile app</p>
+            
+            <!-- QR Code Image -->
+            <div class="qr-code-container mb-3 p-3 border rounded bg-white">
+                <t t-if="state.qrCode">
+                    <img t-att-src="state.qrCode" alt="WhatsApp QR Code" class="img-fluid"/>
+                </t>
+                <t t-else="">
+                    <div class="spinner-border text-success" role="status">
+                        <span class="visually-hidden">Loading...</span>
                     </div>
-                </div>
-            </t>
+                </t>
+            </div>
+            
+            <!-- Regenerate QR Code Button -->
+            <button class="btn btn-outline-primary mb-3" t-on-click="regenerateQR">
+                <i class="fa fa-refresh me-1"></i> Generate New QR Code
+            </button>
+            
+            <div class="instructions mt-3">
+                <ol class="text-start">
+                    <li>Open WhatsApp on your phone</li>
+                    <li>Tap Menu on Android, or Settings on iPhone</li>
+                    <li>Tap Linked devices and then Link a device</li>
+                    <li>Point your phone at this screen to scan the QR code</li>
+                </ol>
+            </div>
+            
+            <div class="connection-status mt-3">
+                <t t-if="state.connectionStatus === 'connecting'">
+                    <div class="alert alert-info">Waiting for QR scan...</div>
+                </t>
+                <t t-if="state.connectionStatus === 'failed'">
+                    <div class="alert alert-danger">Connection failed. Please try again.</div>
+                </t>
+            </div>
+        </div>
+    </div>
+</t>
             
             <!-- Main Chat Interface (shown when authenticated) -->
             <t t-if="state.isAuthenticated">

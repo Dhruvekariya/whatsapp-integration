@@ -140,6 +140,14 @@ async logout() {
             this.state.qrCode = null;
             this.state.connectionStatus = 'disconnected';
             
+            // Force a new QR code generation
+            await fetch('http://localhost:3000/restart-client', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            
             // Reconnect WebSocket to get new QR code
             if (this.ws) {
                 this.ws.close();
@@ -150,6 +158,37 @@ async logout() {
         }
     } catch (error) {
         console.error("Error during logout:", error);
+    } finally {
+        this.state.loading = false;
+    }
+}
+
+async regenerateQR() {
+    try {
+        this.state.loading = true;
+        this.state.isAuthenticated = false;
+        this.state.qrCode = null;
+        this.state.connectionStatus = 'connecting';
+        
+        // Force a new QR code generation
+        const response = await fetch('http://localhost:3000/restart-client', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Reconnect WebSocket to get new QR code
+            if (this.ws) {
+                this.ws.close();
+            }
+            this.setupWebSocket();
+        }
+    } catch (error) {
+        console.error("Error regenerating QR:", error);
     } finally {
         this.state.loading = false;
     }
