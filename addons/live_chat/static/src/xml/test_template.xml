@@ -208,7 +208,30 @@
                             No chats available
                         </div>
                     </t>
-                    
+                    <t t-if="state.showProfilePicViewer">
+                    <div class="modal-backdrop fade show" style="z-index: 1100;"></div>
+                    <div class="modal fade show d-block" style="z-index: 1105;" t-on-click.self="closeProfilePicViewer">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">
+                                        <t t-esc="state.viewedProfilePic.name || 'Profile Picture'"/>
+                                    </h5>
+                                    <button type="button" class="btn-close" t-on-click="closeProfilePicViewer"></button>
+                                </div>
+                                <div class="modal-body text-center">
+                                    <img t-att-src="state.viewedProfilePic.url" class="img-fluid rounded-circle" style="max-height: 70vh;"/>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" t-on-click="closeProfilePicViewer">
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+
                     <t t-if="!state.loading">
                        <div class="chat-list" style="height: calc(100vh - 125px); background-color: #ffffff; overflow-y: auto; overflow-x: hidden;">
                             <t t-foreach="state.filteredChats" t-as="chat" t-key="chat.id">
@@ -217,16 +240,17 @@
                                     t-att-class="{'active-chat bg-light': chat.isActive}"
                                     t-on-click="() => this.selectChat(chat)"
                                 >
-                                    <div class="avatar me-3">
-                                        <t t-if="chat.profilePicUrl">
-                                            <img t-att-src="chat.profilePicUrl" alt="Profile" class="rounded-circle" width="50" height="50"/>
-                                        </t>
-                                        <t t-else="">
-                                            <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 50px; height: 50px; background-color: #128C7E;">
-                                                <t t-esc="chat.name.charAt(0).toUpperCase()"/>
-                                            </div>
-                                        </t>
-                                    </div>
+                                        <div class="avatar me-3" t-on-click="() => this.viewProfilePicture(chat.profilePicUrl, chat.name)">
+                                            <t t-if="chat.profilePicUrl">
+                                                <img t-att-src="chat.profilePicUrl" alt="Profile" class="rounded-circle" width="50" height="50" style="cursor: pointer;"/>
+                                            </t>
+                                            <t t-else="">
+                                                <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 50px; height: 50px; background-color: #128C7E; cursor: pointer;">
+                                                    <t t-esc="chat.name.charAt(0).toUpperCase()"/>
+                                                </div>
+                                            </t>
+                                        </div>
+
                                     <div class="flex-grow-1 border-bottom pb-2">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <strong class="chat-name"><t t-esc="chat.name"/></strong>
@@ -310,13 +334,13 @@
                     
                     <t t-if="state.activeChat">
                         <!-- Chat header -->
-                        <div class="chat-header p-2 border-bottom d-flex align-items-center" style="background-color: #f0f2f5;">
-                            <div class="avatar me-3">
+                        <div class="chat-header p-2 border-bottom d-flex align-items-center bg-white">
+                            <div class="avatar me-3" t-on-click="() => this.viewProfilePicture(state.activeChat.profilePicUrl, state.activeChat.name)">
                                 <t t-if="state.activeChat.profilePicUrl">
-                                    <img t-att-src="state.activeChat.profilePicUrl" alt="Profile" class="rounded-circle" width="40" height="40"/>
+                                    <img t-att-src="state.activeChat.profilePicUrl" alt="Profile" class="rounded-circle" width="40" height="40" style="cursor: pointer;"/>
                                 </t>
                                 <t t-else="">
-                                    <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px; background-color: #128C7E;">
+                                    <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px; background-color: #128C7E; cursor: pointer;">
                                         <t t-esc="state.activeChat.name.charAt(0).toUpperCase()"/>
                                     </div>
                                 </t>

@@ -35,6 +35,11 @@ class WhatsAppChat extends Component {
                 name: null,
                 mimeType: null
             },
+            showProfilePicViewer: false,
+            viewedProfilePic: {
+                url: null,
+                name: null
+            },
             audioRecorder: null,
             audioChunks: [],
             recordingInterval: null,
@@ -115,6 +120,18 @@ viewMedia(media) {
         mimeType: media.mimeType
     };
     this.state.showMediaViewer = true;
+}
+
+viewProfilePicture(profilePicUrl, name) {
+    this.state.viewedProfilePic = {
+        url: profilePicUrl,
+        name: name
+    };
+    this.state.showProfilePicViewer = true;
+}
+
+closeProfilePicViewer() {
+    this.state.showProfilePicViewer = false;
 }
 
 async logout() {
