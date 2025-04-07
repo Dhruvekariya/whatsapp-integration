@@ -13,6 +13,7 @@ nodejs/*
 !addons/whatsapp_integration_test/
 !addons/whatsapp_integration_test/
 !addons/live_chat/
+!addons/visit/
 # Allow specific files inside nodejs
 !nodejs/server.js
 !nodejs/package.json

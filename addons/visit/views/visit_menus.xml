@@ -1,0 +1,13 @@
+<odoo>
+    <!-- Main Visit menu -->
+    <menuitem id="menu_visit_root" name="Visit" sequence="10" />
+
+    <!-- Submenu for Visit management -->
+    <menuitem id="menu_visit_main" name="Visit Management" parent="menu_visit_root" sequence="10" />
+
+    <!-- Submenu: Orders -->
+    <menuitem id="menu_visit_orders" name="Orders"
+              parent="menu_visit_root"
+              action="action_visit"
+              sequence="20" />
+</odoo>

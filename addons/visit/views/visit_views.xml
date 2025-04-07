@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  
+
+    <!-- Visit Form View -->
+    <record id="view_visit_form" model="ir.ui.view">
+        <field name="name">visit.form</field>
+        <field name="model">visit.visit</field>
+        <field name="arch" type="xml">
+            <form string="Visit">
+                <header>
+                    <button name="action_quotation_sent" string="Send Quotation" type="object" class="oe_highlight"
+                            invisible="total_status != 'draft'"/>
+                    <button name="action_confirm" string="Confirm Sale" type="object"
+                            invisible="total_status != 'sent'"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="total_status in ['cancel']"/>
+                    <button name="action_draft" string="Set to Quotation" type="object"
+                            invisible="total_status != 'cancel'"/>
+                    <field name="total_status" widget="statusbar" clickable="1" statusbar_visible="draft,sent,sale,cancel"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="number" readonly="1" class="oe_inline"/>
+                        </h1>
+                    </div>
+                    <div class="oe_right">
+                        <div class="oe_chatter">
+                            <field name="message_ids" widget="mail_thread"/>
+                        </div>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="creation_date" readonly="1"/>
+                            <field name="option_date" required="1"/>
+                        </group>
+                        <group>
+                            <field name="customer" required="1" options="{'no_open': True}"/>
+                            <field name="salesperson" required="1"/>
+                        </group>
+                    </group>
+                    <!-- Removed the entire notebook section that contained the tabs -->
+                    <!-- <field name="order_line_ids" context="{'default_visit_id': active_id}">
+                        <tree editable="bottom" string="Order Lines">
+                            <field name="product_id" widget="many2one_quick_entry"/>
+                            <field name="description"/>
+                            <field name="quantity"/>
+                            <field name="unit_price"/>
+                            <field name="tax_id" widget="many2many_tags"/>
+                            <field name="price_subtotal"/>
+                        </tree>
+                        <form>
+                            <group>
+                                <field name="product_id" widget="many2one_quick_entry"/>
+                                <field name="description"/>
+                                <field name="quantity"/>
+                                <field name="unit_price"/>
+                                <field name="tax_id" widget="many2many_tags"/>
+                                <field name="price_subtotal" readonly="1"/>
+                            </group>
+                        </form>
+                    </field> -->
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Visit Tree View -->
+    <record id="view_visit_tree" model="ir.ui.view">
+        <field name="name">visit.tree</field>
+        <field name="model">visit.visit</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="number" string="Visit Number"/>
+                <field name="creation_date"/>
+                <field name="customer"/>
+                <field name="salesperson"/>
+        
+                <field name="total_status"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_visit" model="ir.actions.act_window">
+        <field name="name">Visits</field>
+        <field name="res_model">visit.visit</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Visit Order
+            </p>
+        </field>
+    </record>
+
+    
+    <record id="action_visit_form" model="ir.actions.act_window">
+        <field name="name">New Visit</field>
+        <field name="res_model">visit.visit</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_visit_form"/>
+        <field name="target">new</field>
+    </record>
+</odoo>

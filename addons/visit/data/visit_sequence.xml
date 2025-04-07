@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="seq_visit" model="ir.sequence">
+            <field name="name">Visit Sequence</field>
+            <field name="code">visit.visit</field>
+            <field name="prefix">V</field>
+            <field name="padding">6</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>

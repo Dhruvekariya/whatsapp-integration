@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Create a new category if needed -->
+    <record id="module_category_visit" model="ir.module.category">
+        <field name="name">Visit Management</field>
+        <field name="sequence">100</field>
+    </record>
+    
+    <!-- Groups using the new category -->
+    <record id="group_visit_user" model="res.groups">
+        <field name="name">Visit User</field>
+        <field name="category_id" ref="module_category_visit"/>
+    </record>
+    
+    <record id="group_visit_manager" model="res.groups">
+        <field name="name">Visit Manager</field>
+        <field name="category_id" ref="module_category_visit"/>
+        <field name="implied_ids" eval="[(4, ref('group_visit_user'))]"/>
+    </record>
+</odoo>
