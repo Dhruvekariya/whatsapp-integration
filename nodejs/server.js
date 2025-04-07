@@ -538,9 +538,16 @@ app.post('/logout', async (_req, res) => {
             return errorResponse(res, new Error("Client not authenticated"), 400);
         }
 
-        await client.logout();
+        // Properly destroy the client instance
+        await client.destroy();
+        client.removeAllListeners(); // Remove all event listeners
+        
         qrCodeData = "";
         clientReady = false;
+        clientInitializing = false;
+
+        // Create a new client instance
+        initializeWhatsAppClient();
 
         return successResponse(res, null, "Logged out successfully");
     } catch (error) {

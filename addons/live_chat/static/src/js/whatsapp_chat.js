@@ -254,7 +254,19 @@ async regenerateQR() {
                     this.state.connectionStatus = 'connected';
                     this.loadChats();
                     
+                    // Clear any existing QR code
+                    this.state.qrCode = null;
                 }, 5000);
+            }
+            else if (data.type === 'disconnected') {
+                this.state.isAuthenticated = false;
+                this.state.connectionStatus = 'disconnected';
+                this.state.qrCode = null;
+            }
+            else if (data.type === 'authFailure') {
+                this.state.isAuthenticated = false;
+                this.state.connectionStatus = 'failed';
+                this.state.qrCode = null;
             }
             else if (data.type === "newMessage") {
                 console.log("Received message type:", data);
