@@ -20,14 +20,10 @@ class Visit(models.Model):
     payment_term_id = fields.Many2one('account.payment.term', string='Payment Terms')
   
     total_status = fields.Selection([
-        ('draft', 'Quotation'),
-        ('sent', 'Quotation Sent'),
-        ('sale', 'Confirmed'),
-        ('cancel', 'Cancelled')
+        ('draft', 'Draft'),
+        ('submitted', 'Submitted')
     ], string='Status', readonly=True, copy=False, index=True, default='draft', tracking=True)
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
-
-   
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -36,27 +32,15 @@ class Visit(models.Model):
                 vals['number'] = self.env['ir.sequence'].next_by_code('visit.visit') or _('New')
         return super().create(vals_list)
 
-    def action_quotation_sent(self):
-        self.write({'total_status': 'sent'})
-        # Return a completely blank form view
+    def action_submit(self):
+        self.write({'total_status': 'submitted'})
         return {
             'type': 'ir.actions.act_window',
-            'name': 'New Visit',
             'res_model': 'visit.visit',
             'view_mode': 'form',
-            'target': 'current',  # Use 'new' if you prefer it in a popup
-            'context': {}  # No defaults, keeps the form blank
+            'target': 'current',
+            'context': {'default_total_status': 'draft'},
         }
-
-
-
-    def action_confirm(self):
-        self.write({'total_status': 'sale'})
-        return True
-
-    def action_cancel(self):
-        self.write({'total_status': 'cancel'})
-        return True
 
     def action_draft(self):
         self.write({'total_status': 'draft'})
