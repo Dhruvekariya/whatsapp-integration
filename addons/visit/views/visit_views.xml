@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
   
-
 <!-- Visit Form View -->
 <record id="view_visit_form" model="ir.ui.view">
     <field name="name">visit.form</field>
@@ -10,70 +9,117 @@
         <form string="Visit">
             <header>
                 <button name="action_submit" string="Submit" type="object" class="oe_highlight"
-                        invisible="total_status != 'draft'"/>
+                        visibility="{'invisible': [('total_status', '!=', 'draft')]}"/>
                 <button name="action_draft" string="Set to Draft" type="object"
-                        invisible="total_status != 'submitted'"/>
-                <field name="total_status" widget="statusbar" clickable="1" statusbar_visible="draft,submitted"/>
+                        visibility="{'invisible': [('total_status', '!=', 'submitted')]}"/>
+                <button name="action_cancel" string="Cancel" type="object"
+                        visibility="{'invisible': [('total_status', 'not in', ['draft', 'submitted'])]}"/>
+                <button name="action_view_sale_order" string="View Sales Order" type="object" 
+                        class="oe_highlight" visibility="{'invisible': [('sale_order_id', '=', False)]}"/>
+                <field name="total_status" widget="statusbar" statusbar_visible="draft,submitted,converted,cancelled"/>
             </header>
             <sheet>
+                <div class="oe_button_box" name="button_box">
+                    <button name="action_view_sale_order" type="object" class="oe_stat_button" icon="fa-dollar"
+                            visibility="{'invisible': [('sale_order_count', '=', 0)]}">
+                        <field name="sale_order_count" widget="statinfo" string="Sales Order"/>
+                    </button>
+                </div>
                 <div class="oe_title">
                     <h1>
                         <field name="number" readonly="1" class="oe_inline"/>
                     </h1>
                 </div>
-                <div class="oe_right">
-                    <div class="oe_chatter">
-                        <field name="message_ids" widget="mail_thread"/>
-                    </div>
-                </div>
                 <group>
                     <group>
                         <field name="creation_date" readonly="1"/>
                         <field name="option_date" required="1"/>
+                        <field name="customer" required="1" options="{'no_open': True}"/>
                     </group>
                     <group>
-                        <field name="customer" required="1" options="{'no_open': True}"/>
                         <field name="salesperson" required="1"/>
+                        <field name="payment_term_id"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                        <field name="sale_order_id" readonly="1" visibility="{'invisible': [('sale_order_id', '=', False)]}"/>
                     </group>
                 </group>
+                <notebook>
+                    <page string="Notes">
+                        <field name="notes" placeholder="Enter visit details, points discussed, etc."/>
+                    </page>
+                </notebook>
             </sheet>
+            <div class="oe_chatter">
+                <field name="message_follower_ids" widget="mail_followers"/>
+                <field name="activity_ids" widget="mail_activity"/>
+                <field name="message_ids" widget="mail_thread"/>
+            </div>
         </form>
     </field>
 </record>
 
-
+<!-- Visit Tree View -->
 <record id="view_visit_tree" model="ir.ui.view">
     <field name="name">visit.tree</field>
     <field name="model">visit.visit</field>
     <field name="arch" type="xml">
-        <tree>
+        <tree decoration-info="total_status=='draft'" decoration-success="total_status=='converted'" decoration-muted="total_status=='cancelled'">
             <field name="number" string="Visit Number"/>
             <field name="creation_date"/>
+            <field name="option_date"/>
             <field name="customer"/>
             <field name="salesperson"/>
             <field name="total_status"/>
+            <field name="sale_order_id"/>
         </tree>
     </field>
 </record>
 
-    <!-- Actions -->
-    <record id="action_visit" model="ir.actions.act_window">
-        <field name="name">Visits</field>
-        <field name="res_model">visit.visit</field>
-        <field name="view_mode">tree,form</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Create your first Visit Order
-            </p>
-        </field>
-    </record>
+<!-- Visit Search View -->
+<record id="view_visit_search" model="ir.ui.view">
+    <field name="name">visit.search</field>
+    <field name="model">visit.visit</field>
+    <field name="arch" type="xml">
+        <search string="Search Visits">
+            <field name="number"/>
+            <field name="customer"/>
+            <field name="salesperson"/>
+            <separator/>
+            <filter string="Draft" name="draft" domain="[('total_status', '=', 'draft')]"/>
+            <filter string="Submitted" name="submitted" domain="[('total_status', '=', 'submitted')]"/>
+            <filter string="Converted to Sale" name="converted" domain="[('total_status', '=', 'converted')]"/>
+            <filter string="Cancelled" name="cancelled" domain="[('total_status', '=', 'cancelled')]"/>
+            <separator/>
+            <filter string="My Visits" name="my_visits" domain="[('salesperson', '=', uid)]"/>
+            <group expand="0" string="Group By">
+                <filter string="Customer" name="customer" context="{'group_by': 'customer'}"/>
+                <filter string="Salesperson" name="salesperson" context="{'group_by': 'salesperson'}"/>
+                <filter string="Status" name="status" context="{'group_by': 'total_status'}"/>
+                <filter string="Visit Date" name="option_date" context="{'group_by': 'option_date'}"/>
+            </group>
+        </search>
+    </field>
+</record>
 
-    
-    <record id="action_visit_form" model="ir.actions.act_window">
-        <field name="name">New Visit</field>
-        <field name="res_model">visit.visit</field>
-        <field name="view_mode">form</field>
-        <field name="view_id" ref="view_visit_form"/>
-        <field name="target">new</field>
-    </record>
+<!-- Actions -->
+<record id="action_visit" model="ir.actions.act_window">
+    <field name="name">Visits</field>
+    <field name="res_model">visit.visit</field>
+    <field name="view_mode">tree,form</field>
+    <field name="search_view_id" ref="view_visit_search"/>
+    <field name="context">{'search_default_draft': 1}</field>
+    <field name="help" type="html">
+        <p class="o_view_nocontent_smiling_face">
+            Create your first Visit Order
+        </p>
+    </field>
+</record>
+
+<record id="action_visit_form" model="ir.actions.act_window">
+    <field name="name">New Visit</field>
+    <field name="res_model">visit.visit</field>
+    <field name="view_mode">form</field>
+    <field name="view_id" ref="view_visit_form"/>
+    <field name="target">new</field>
+</record>
 </odoo>

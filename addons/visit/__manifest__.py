@@ -11,12 +11,19 @@
     'website': 'https://www.yourwebsite.com',
     'category': 'Sales',
     'depends': ['base', 'sale', 'account', 'mail'],
+     # Data Files
     'data': [
-        'data/visit_sequence.xml',
+        # Security
         'security/visit_security.xml',
         'security/ir.model.access.csv',
+        
+        # Data
+        'data/visit_sequence.xml',
+        
+        # Views
         'views/visit_views.xml',
         'views/visit_menus.xml',
+        'views/wizard_make_sale_views.xml',
     ],
     'demo': [],
     'installable': True,

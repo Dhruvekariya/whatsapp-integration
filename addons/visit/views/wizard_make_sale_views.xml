@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View for the Wizard -->
+    <record id="view_visit_make_sale_form" model="ir.ui.view">
+        <field name="name">visit.make.sale.form</field>
+        <field name="model">visit.make.sale</field>
+        <field name="arch" type="xml">
+            <form string="Create Sales Order?">
+                <div class="alert alert-info" role="alert">
+                    <p>Do you want to create a sales order for this visit?</p>
+                </div>
+                <group>
+                    <field name="visit_id" invisible="1"/>
+                    <field name="customer_id"/>
+                    <field name="salesperson_id"/>
+                    <field name="payment_term_id"/>
+                </group>
+                <footer>
+                    <button name="action_create_sale_order" string="Create Sales Order" type="object" class="btn-primary"/>
+                    <button name="action_cancel" string="No, Just Submit Visit" type="object" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open the wizard -->
+    <record id="action_visit_make_sale" model="ir.actions.act_window">
+        <field name="name">Create Sales Order?</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">visit.make.sale</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_visit_make_sale_form"/>
+        <field name="target">new</field>
+    </record>
+</odoo>

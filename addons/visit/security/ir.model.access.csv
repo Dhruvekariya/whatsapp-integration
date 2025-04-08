@@ -1,3 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_visit_user,visit.user,model_visit_visit,group_visit_user,1,1,1,0
-access_visit_manager,visit.manager,model_visit_visit,group_visit_manager,1,1,1,1
+access_visit_visit_user,visit.visit.user,model_visit_visit,group_visit_user,1,1,1,0
+access_visit_visit_manager,visit.visit.manager,model_visit_visit,group_visit_manager,1,1,1,1
+access_visit_make_sale_user,visit.make.sale.user,model_visit_make_sale,group_visit_user,1,1,1,0
+access_visit_make_sale_manager,visit.make.sale.manager,model_visit_make_sale,group_visit_manager,1,1,1,1
