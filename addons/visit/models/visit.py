@@ -17,7 +17,6 @@ class Visit(models.Model):
     option_date = fields.Datetime(string='Visit Date', required=True)
     customer = fields.Many2one('res.partner', string='Customer', required=True, domain=[('customer_rank', '>', 0)])
     salesperson = fields.Many2one('res.users', string='Salesperson', default=_default_salesperson, required=True)
-    payment_term_id = fields.Many2one('account.payment.term', string='Payment Terms')
     notes = fields.Text(string='Visit Notes', help="Enter any details about the visit")
     
     # Added relation to sales order
@@ -57,7 +56,6 @@ class Visit(models.Model):
             'visit_id': self.id,
             'customer_id': self.customer.id,
             'salesperson_id': self.salesperson.id,
-            'payment_term_id': self.payment_term_id.id if self.payment_term_id else False,
         })
         
         # Return action to open wizard

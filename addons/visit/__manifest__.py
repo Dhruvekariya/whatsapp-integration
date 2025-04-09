@@ -10,7 +10,7 @@
     'author': 'Your Name',
     'website': 'https://www.yourwebsite.com',
     'category': 'Sales',
-    'depends': ['base', 'sale', 'account', 'mail'],
+    'depends': ['base', 'sale', 'mail'],
      # Data Files
     'data': [
         # Security
