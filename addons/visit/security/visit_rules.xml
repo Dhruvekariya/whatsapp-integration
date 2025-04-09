@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Multi-Company Rules - this applies to everyone -->
+    <record id="visit_comp_rule" model="ir.rule">
+        <field name="name">Visit multi-company</field>
+        <field name="model_id" ref="model_visit_visit"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="global" eval="True"/>
+    </record>
+    
+    <!-- User: Own Visits Only Rule -->
+    <record id="visit_personal_rule" model="ir.rule">
+        <field name="name">Personal Visits</field>
+        <field name="model_id" ref="model_visit_visit"/>
+        <field name="domain_force">[('salesperson', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('group_visit_user'))]"/>
+    </record>
+    
+    <!-- User: All Visits Rule -->
+    <record id="visit_see_all" model="ir.rule">
+        <field name="name">All Visits</field>
+        <field name="model_id" ref="model_visit_visit"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_visit_all'))]"/>
+    </record>
+    
+    <!-- Wizard Access Rules -->
+    <record id="visit_make_sale_rule" model="ir.rule">
+        <field name="name">Visit Make Sale Wizard Access</field>
+        <field name="model_id" ref="model_visit_make_sale"/>
+        <field name="domain_force">[('create_uid', '=', user.id)]</field>
+    </record>
+</odoo>

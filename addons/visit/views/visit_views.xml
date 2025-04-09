@@ -44,7 +44,7 @@
                 </group>
                 <notebook>
                     <page string="Notes">
-                        <field name="notes" placeholder="Enter visit details, points discussed, etc."/>
+                        <field name="notes" placeholder="Enter visit details, points discussed, etc." options="{'collaborative': true}" />
                     </page>
                 </notebook>
             </sheet>

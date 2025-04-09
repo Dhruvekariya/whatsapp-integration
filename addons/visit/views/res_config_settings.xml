@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Create a standalone settings form view -->
+    <record id="visit_settings_view_form" model="ir.ui.view">
+        <field name="name">visit.settings.view.form</field>
+        <field name="model">res.config.settings</field>
+        <field name="arch" type="xml">
+            <form string="Visit Settings" class="oe_form_configuration">
+                <header>
+                    <button string="Save" type="object" name="execute" class="oe_highlight"/>
+                    <button string="Discard" type="object" name="cancel" special="cancel"/>
+                </header>
+                <sheet>
+                    <div class="app_settings_block">
+                        <h2>Visit Management</h2>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="group_auto_done_visit"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="group_auto_done_visit"/>
+                                    <div class="text-muted">
+                                        Lock submitted visits to prevent editing
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open the settings form -->
+    <record id="visit_config_settings_action" model="ir.actions.act_window">
+        <field name="name">Visit Settings</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_id" ref="visit_settings_view_form"/>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+    </record>
+
+    <!-- Menu item for the settings -->
+    <menuitem id="menu_visit_config" 
+              name="Settings" 
+              parent="menu_visit_root"
+              sequence="100"
+              action="visit_config_settings_action"
+              groups="visit.group_visit_manager"/>
+</odoo>

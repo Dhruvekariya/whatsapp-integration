@@ -1,4 +1,5 @@
-from odoo import models, fields, api
+# -*- coding: utf-8 -*-
+from odoo import models, fields, api, _
 
 class MakeVisitSale(models.TransientModel):
     _name = 'visit.make.sale'
@@ -8,24 +9,26 @@ class MakeVisitSale(models.TransientModel):
     customer_id = fields.Many2one('res.partner', string='Customer', readonly=True)
     salesperson_id = fields.Many2one('res.users', string='Salesperson', readonly=True)
     payment_term_id = fields.Many2one('account.payment.term', string='Payment Terms', readonly=True)
+    company_id = fields.Many2one('res.company', string='Company', related='visit_id.company_id', readonly=True)
     
     def action_create_sale_order(self):
         """Create a sales order from the visit information"""
         self.ensure_one()
         
-        # Create the sales order
-        sale_order = self.env['sale.order'].create({
+        # Create the sales order in the correct company
+        sale_order = self.with_company(self.company_id).env['sale.order'].create({
             'partner_id': self.customer_id.id,
             'user_id': self.salesperson_id.id,
             'payment_term_id': self.payment_term_id.id if self.payment_term_id else False,
             'origin': self.visit_id.number,
             'visit_id': self.visit_id.id,
+            'company_id': self.company_id.id,
         })
         
         # Update the visit with the sales order
         self.visit_id.write({
             'sale_order_id': sale_order.id,
-            'total_status': 'submitted'
+            'total_status': 'converted'
         })
         
         # Return an action to view the created sales order
@@ -35,6 +38,7 @@ class MakeVisitSale(models.TransientModel):
             'view_mode': 'form',
             'res_id': sale_order.id,
             'target': 'current',
+            'context': {'default_company_id': self.company_id.id},
         }
     
     def action_cancel(self):
@@ -50,5 +54,5 @@ class MakeVisitSale(models.TransientModel):
             'res_model': 'visit.visit',
             'view_mode': 'form',
             'target': 'current',
-            'context': {'default_total_status': 'draft'},
+            'context': {'default_total_status': 'draft', 'default_company_id': self.company_id.id},
         }

@@ -12,9 +12,11 @@
     'category': 'Sales',
     'depends': ['base', 'sale', 'mail'],
      # Data Files
-    'data': [
-        # Security
+    'data': 
+    [
+        # Security (load in correct order)
         'security/visit_security.xml',
+        'security/visit_rules.xml',
         'security/ir.model.access.csv',
         
         # Data
@@ -24,7 +26,9 @@
         'views/visit_views.xml',
         'views/visit_menus.xml',
         'views/wizard_make_sale_views.xml',
+        'views/res_config_settings.xml',
     ],
+    
     'demo': [],
     'installable': True,
     'application': True,
