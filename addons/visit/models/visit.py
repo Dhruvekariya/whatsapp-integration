@@ -25,7 +25,7 @@ class Visit(models.Model):
                              domain="[('customer_rank', '>', 0)]")
     salesperson = fields.Many2one('res.users', string='Salesperson', 
                                 default=_default_salesperson, required=True)
-    notes = fields.Text(string='Visit Notes', help="Enter visit details, points discussed, etc.")
+    notes = fields.Html(string='Visit Notes', help="Enter visit details, points discussed, etc.")
     
     # Added relation to sales order - no check_company here
     sale_order_id = fields.Many2one('sale.order', string='Related Sales Order', 
