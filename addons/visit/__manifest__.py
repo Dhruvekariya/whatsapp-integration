@@ -32,8 +32,6 @@
     'assets': {
         'web.assets_backend': [
             'visit/static/src/js/visit_location.js',
-            #'visit/static/src/xml/location_getter.xml',
-
         ],
     },
 
