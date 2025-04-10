@@ -42,6 +42,15 @@ class Visit(models.Model):
     company_id = fields.Many2one('res.company', string='Company', 
                                default=_default_company_id, required=True,
                                index=True)
+    
+     # GPS location fields
+    submit_latitude = fields.Float(string="Latitude", digits=(10, 7), readonly=True)
+    submit_longitude = fields.Float(string="Longitude", digits=(10, 7), readonly=True)
+    submit_country_name = fields.Char(string="Country", help="Based on IP Address", readonly=True)
+    submit_city = fields.Char(string="City", readonly=True)
+    submit_ip_address = fields.Char(string="IP Address", readonly=True)
+    submit_browser = fields.Char(string="Browser", readonly=True)
+    location_acquired = fields.Boolean(string="Location Acquired", default=False, readonly=True)
 
     @api.onchange('customer', 'company_id')
     def _onchange_customer_company(self):
@@ -83,6 +92,18 @@ class Visit(models.Model):
     def action_submit(self):
         """Open wizard to ask about creating sales order"""
         self.ensure_one()
+
+                # Check if location is already acquired
+        if not self.location_acquired:
+            # Return client action to get location first
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'action_visit_get_location_and_submit',
+                'params': {
+                    'visit_id': self.id,
+                    'submit_after': True
+                }
+            }
         
         # Create wizard with current company context
         wizard = self.with_company(self.company_id).env['visit.make.sale'].create({
@@ -142,7 +163,9 @@ class Visit(models.Model):
             not self._check_edit_rights()):
             
             # If vals only contains fields that are allowed to be modified, continue
-            allowed_fields = ['total_status', 'sale_order_id', 'message_ids', 'message_follower_ids', 'activity_ids']
+            allowed_fields = ['total_status', 'sale_order_id', 'message_ids', 'message_follower_ids', 'activity_ids', 
+                            'submit_latitude','submit_longitude', 'submit_country_name', 'submit_city', 
+                            'submit_ip_address', 'submit_browser', 'location_acquired']
             if not any(field for field in vals.keys() if field not in allowed_fields):
                 return super().write(vals)
                 
@@ -161,3 +184,26 @@ class Visit(models.Model):
             return True
             
         return False
+    
+    def js_get_location(self):
+        """Execute client-side JS code to get location"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'action_visit_get_location',
+            'params': {
+                'visit_id': self.id
+            }
+        }
+    
+    def action_view_maps(self):
+        """View the visit location on Google Maps"""
+        self.ensure_one()
+        if not self.submit_latitude or not self.submit_longitude:
+            return {'type': 'ir.actions.act_window_close'}
+            
+        return {
+            'type': 'ir.actions.act_url',
+            'url': "https://maps.google.com?q=%s,%s" % (self.submit_latitude, self.submit_longitude),
+            'target': 'new'
+        }

@@ -24,6 +24,10 @@
                             visibility="{'invisible': [('sale_order_count', '=', 0)]}">
                         <field name="sale_order_count" widget="statinfo" string="Sales Order"/>
                     </button>
+                    <button name="action_view_maps" type="object" class="oe_stat_button" icon="fa-map-marker"
+                            visibility="{'invisible': [('submit_latitude', '=', False)]}">
+                        <span>View on Map</span>
+                    </button>                    
                 </div>
                 <div class="oe_title">
                     <h1>
@@ -40,12 +44,38 @@
                         <field name="salesperson" required="1"/>
                         <field name="company_id" groups="base.group_multi_company"/>
                         <field name="sale_order_id" readonly="1" visibility="{'invisible': [('sale_order_id', '=', False)]}"/>
+                        <field name="location_acquired" invisible="1"/>
+
                     </group>
                 </group>
                 <notebook>
                     <page string="Notes">
                         <field name="notes" placeholder="Enter visit details, points discussed, etc." options="{'collaborative': true}" />
                     </page>
+                    <!-- New Location Info page -->
+                    <page string="Location" visibility="{'invisible': [('submit_latitude', '=', False)]}">
+                        <group>
+                            <group>
+                                <field name="submit_ip_address"/>
+                                <field name="submit_browser"/>
+                            </group>
+                            <group>
+                                <label for="submit_country_name" string="Location"/>
+                                <div class="o_row">
+                                    <span><field name="submit_country_name"/></span>
+                                    <span>,<field name="submit_city" visibility="{'invisible': [('submit_city', '=', 'Unknown')]}" nolabel="1"/></span>
+                                </div>
+                                
+                                <label for="submit_latitude" string="GPS Coordinates"/>
+                                <div>
+                                    <div class="o_row">
+                                        <span><field name="submit_latitude"/></span>
+                                        <span>, <field name="submit_longitude" nolabel="1"/></span>
+                                    </div>
+                                </div>
+                            </group>
+                        </group>
+                    </page>                    
                 </notebook>
             </sheet>
             <div class="oe_chatter">
@@ -70,6 +100,8 @@
             <field name="salesperson"/>
             <field name="total_status"/>
             <field name="sale_order_id"/>
+            <field name="location_acquired" optional="show"/>
+
         </tree>
     </field>
 </record>

@@ -10,7 +10,7 @@
     'author': 'Your Name',
     'website': 'https://www.yourwebsite.com',
     'category': 'Sales',
-    'depends': ['base', 'sale', 'mail'],
+    'depends': ['base', 'sale', 'mail', 'web'],
      # Data Files
     'data': 
     [
@@ -28,6 +28,15 @@
         'views/wizard_make_sale_views.xml',
         'views/res_config_settings.xml',
     ],
+    
+    'assets': {
+        'web.assets_backend': [
+            'visit/static/src/js/visit_location.js',
+            #'visit/static/src/xml/location_getter.xml',
+
+        ],
+    },
+
     
     'demo': [],
     'installable': True,
