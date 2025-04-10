@@ -10,6 +10,27 @@ class MakeVisitSale(models.TransientModel):
     salesperson_id = fields.Many2one('res.users', string='Salesperson', readonly=True)
     payment_term_id = fields.Many2one('account.payment.term', string='Payment Terms', readonly=True)
     company_id = fields.Many2one('res.company', string='Company', related='visit_id.company_id', readonly=True)
+
+    @api.model
+    def default_get(self, fields_list):
+        """Override default_get to ensure we get the correct values from the context"""
+        res = super(MakeVisitSale, self).default_get(fields_list)
+        
+        # If visit_id is in context, use it to populate other fields
+        active_id = self.env.context.get('active_id')
+        if active_id and 'visit_id' not in res:
+            visit = self.env['visit.visit'].browse(active_id)
+            if visit.exists():
+                res.update({
+                    'visit_id': visit.id,
+                    'customer_id': visit.customer.id,
+                    'salesperson_id': visit.salesperson.id,
+                })
+                self._logger.info(
+                    f"Default visit data loaded: visit_id={visit.id}, customer={visit.customer.id}"
+                )
+        
+        return res
     
     def action_create_sale_order(self):
         """Create a sales order from the visit information"""

@@ -68,18 +68,36 @@ async function getVisitLocationAndSubmit(env, action) {
                 });
 
                 if (submit_after) {
-                    // Continue with the submit process
-                    await actionService.doAction({
-                        type: 'ir.actions.act_window',
-                        res_model: 'visit.make.sale',
-                        name: _t('Create Sales Order?'),
-                        views: [[false, 'form']],
-                        target: 'new',
-                        context: {
-                            'active_id': visit_id,
-                            'active_model': 'visit.visit',
-                            'default_visit_id': visit_id
-                        }
+                    // Continue with the submit process by calling the visit's action_submit method
+                    // This ensures proper context is maintained
+                    await rpc("/web/action/load", {
+                        action_id: "visit.action_visit",
+                    }).then(async (action) => {
+                        // Call the method on the specific record
+                        await actionService.doAction({
+                            type: 'ir.actions.act_window',
+                            res_model: 'visit.visit',
+                            res_id: parseInt(visit_id),
+                            views: [[false, 'form']],
+                            view_mode: 'form',
+                            target: 'current',
+                            flags: {
+                                mode: 'edit',
+                                // This will trigger the action_submit method after the form is loaded
+                                on_close: async () => {
+                                    await rpc("/web/dataset/call_button", {
+                                        model: "visit.visit",
+                                        method: "action_submit",
+                                        args: [parseInt(visit_id)],
+                                        kwargs: {},
+                                    }).then((result) => {
+                                        if (result && result.type) {
+                                            actionService.doAction(result);
+                                        }
+                                    });
+                                }
+                            }
+                        });
                     });
                 } else {
                     // Just reload the form
